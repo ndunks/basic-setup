@@ -1,0 +1,27 @@
+FLASH_BIN := build/flash.bin
+
+.PHONY: info raw
+
+# --flash_mode dio --flash_freq 40m --flash_size 2MB
+# 0x0 bootloader/bootloader.bin
+# 0x8000 partitions_singleapp.bin
+# 0x10000 hello-world.bin
+
+$(FLASH_BIN): app bootloader partition_table
+	echo "Creating $(FLASH_BIN)"
+	cat   $(BOOTLOADER_BIN)  /dev/zero | head -c $$(($(PARTITION_TABLE_OFFSET))) |	\
+	cat - $(PARTITION_TABLE_BIN) /dev/zero | head -c $$(($(APP_OFFSET))) | \
+	cat - $(APP_BIN)  /dev/zero | head -c $$(( 1024 * 2048 )) > $(FLASH_BIN) 
+
+raw: $(FLASH_BIN)
+
+qemulate: $(FLASH_BIN)
+	qemu-system-xtensa -M esp8266 -nographic -serial stdio -monitor none -kernel $(FLASH_BIN)
+
+info: $(APP_ELF) bootloader partition_table
+	@echo "Partition table binary generated. Contents:"
+	@echo $(SEPARATOR)
+	$(GEN_ESP32PART) $(PARTITION_TABLE_BIN)
+	@echo $(SEPARATOR)
+
+	$(CONFIG_SDK_TOOLPREFIX)size $(APP_ELF)
