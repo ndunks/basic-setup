@@ -3,15 +3,32 @@
         {
             "name": "XtensaEspIdf",
             "includePath": [
-                "${workspaceFolder}/main/**",
+                //"${workspaceFolder}/main/include",
+                // Local components
+                "${workspaceFolder}/components/*/include",
+                // Generated headers such as "sdkconfig.h"
                 "${workspaceFolder}/build/include",
+                // Lib C
                 "~/app/xtensa-lx106-elf/include",
+                // Component default includes
                 "~/app/ESP8266_RTOS_SDK/components/*/include",
+                // Component specific includes
+                "~/app/ESP8266_RTOS_SDK/components/console",
+                "~/app/ESP8266_RTOS_SDK/components/freertos/include/freertos",
                 "~/app/ESP8266_RTOS_SDK/components/freertos/include/freertos/private",
-                "~/app/ESP8266_RTOS_SDK/components/*/port/esp8266/include",
-                "~/app/ESP8266_RTOS_SDK/components/freertos/port/esp8266/include/freertos"
+                "~/app/ESP8266_RTOS_SDK/components/freertos/port/esp8266/include",
+                "~/app/ESP8266_RTOS_SDK/components/freertos/port/esp8266/include/freertos",
+                "~/app/ESP8266_RTOS_SDK/components/heap/port/esp8266/include",
+                "~/app/ESP8266_RTOS_SDK/components/lwip/include/apps",
+                "~/app/ESP8266_RTOS_SDK/components/lwip/include/apps/sntp",
+                "~/app/ESP8266_RTOS_SDK/components/lwip/lwip/src/include",
+                "~/app/ESP8266_RTOS_SDK/components/lwip/port/esp8266/include",
+                "~/app/ESP8266_RTOS_SDK/components/lwip/port/esp8266/include/arch",
+                "~/app/ESP8266_RTOS_SDK/components/newlib/platform_include"
             ],
-            "defines": [],
+            "defines": [
+                "__ESP_FILE__=\"dummy.c\""
+            ],
             "compilerPath": "~/app/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc",
             "cStandard": "c17",
             "cppStandard": "c++14",

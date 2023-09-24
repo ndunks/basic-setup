@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := opensmarthome
+#PROJECT_NAME := opensmarthome
 PYTHON := python3
 #COMPONENTS := esp8266 bootloader partition_table
 #bootloader \
