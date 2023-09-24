@@ -1,6 +1,6 @@
 FLASH_BIN := build/flash.bin
 
-.PHONY: info raw
+.PHONY: info raw qemulate mount
 
 # --flash_mode dio --flash_freq 40m --flash_size 2MB
 # 0x0 bootloader/bootloader.bin
@@ -25,3 +25,9 @@ info: $(APP_ELF) bootloader partition_table
 	@echo $(SEPARATOR)
 
 	$(CONFIG_SDK_TOOLPREFIX)size $(APP_ELF)
+
+mount: $(BUILD_DIR_BASE)
+	sudo mount -t tmpfs tmpfs $<
+
+$(BUILD_DIR_BASE):
+	mkdir -p $@
