@@ -1,12 +1,3 @@
-/* Console example — various system commands
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -32,9 +23,8 @@ static const char *TAG = "cmd_system";
 
 static void register_free();
 static void register_heap();
-static void register_version();
+static void register_info();
 static void register_restart();
-static void register_make();
 #if WITH_TASKS_INFO
 static void register_tasks();
 #endif
@@ -43,18 +33,19 @@ void register_system()
 {
     register_free();
     register_heap();
-    register_version();
+    register_info();
     register_restart();
 #if WITH_TASKS_INFO
     register_tasks();
 #endif
 }
 
-/* 'version' command */
-static int get_version(int argc, char **argv)
+/* 'info' command */
+static int get_info(int argc, char **argv)
 {
     esp_chip_info_t info;
     esp_chip_info(&info);
+
     printf("IDF Version:%s\r\n", esp_get_idf_version());
     printf("Chip info:\r\n");
     printf("\tmodel:%s\r\n", info.model == CHIP_ESP8266 ? "ESP8266" : "Unknow");
@@ -66,18 +57,19 @@ static int get_version(int argc, char **argv)
            info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
     printf("\trevision number:%d\r\n", info.revision);
+
     return 0;
 }
 
-static void register_version()
+static void register_info()
 {
     const esp_console_cmd_t cmd = {
-        .command = "version",
-        .help = "Get version of chip and SDK",
+        .command = "info",
+        .help = "Get info of chip and SDK",
         .hint = NULL,
-        .func = &get_version,
+        .func = &get_info,
     };
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
 /** 'restart' command restarts the program */
@@ -96,7 +88,7 @@ static void register_restart()
         .hint = NULL,
         .func = &restart,
     };
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
 /** 'free' command prints available heap memory */
@@ -115,7 +107,7 @@ static void register_free()
         .hint = NULL,
         .func = &free_mem,
     };
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
 /* 'heap' command prints minumum heap size */
@@ -134,8 +126,7 @@ static void register_heap()
         .hint = NULL,
         .func = &heap_size,
     };
-    ESP_ERROR_CHECK( esp_console_cmd_register(&heap_cmd) );
-
+    ESP_ERROR_CHECK(esp_console_cmd_register(&heap_cmd));
 }
 
 /** 'tasks' command prints the list of tasks and related information */
@@ -145,7 +136,8 @@ static int tasks_info(int argc, char **argv)
 {
     const size_t bytes_per_task = 40; /* see vTaskList description */
     char *task_list_buffer = malloc(uxTaskGetNumberOfTasks() * bytes_per_task);
-    if (task_list_buffer == NULL) {
+    if (task_list_buffer == NULL)
+    {
         ESP_LOGE(TAG, "failed to allocate buffer for vTaskList output");
         return 1;
     }
@@ -168,8 +160,7 @@ static void register_tasks()
         .hint = NULL,
         .func = &tasks_info,
     };
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
+    ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
 
 #endif // WITH_TASKS_INFO
-

@@ -24,3 +24,9 @@ sudo apt-get install gcc git wget make libncurses-dev flex bison gperf python-is
 ```sh
 PYTHON=python3 make menuconfig
 ```
+
+# Device ID
+
+- Efuse
+- Internal flash chip ID
+- Firmware Info + time stamp ?
