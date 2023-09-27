@@ -22,7 +22,6 @@
 static const char *TAG = "cmd_system";
 
 static void register_free();
-static void register_heap();
 static void register_info();
 static void register_restart();
 #if WITH_TASKS_INFO
@@ -32,7 +31,6 @@ static void register_tasks();
 void register_system()
 {
     register_free();
-    register_heap();
     register_info();
     register_restart();
 #if WITH_TASKS_INFO
@@ -95,7 +93,9 @@ static void register_restart()
 
 static int free_mem(int argc, char **argv)
 {
-    printf("%d\n", esp_get_free_heap_size());
+    printf("Free: %d\r\nMin : %d\r\n",
+           esp_get_free_heap_size(),
+           heap_caps_get_minimum_free_size(MALLOC_CAP_32BIT));
     return 0;
 }
 
@@ -108,25 +108,6 @@ static void register_free()
         .func = &free_mem,
     };
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
-}
-
-/* 'heap' command prints minumum heap size */
-static int heap_size(int argc, char **argv)
-{
-    uint32_t heap_size = heap_caps_get_minimum_free_size(MALLOC_CAP_32BIT);
-    ESP_LOGI(TAG, "min heap size: %u", heap_size);
-    return 0;
-}
-
-static void register_heap()
-{
-    const esp_console_cmd_t heap_cmd = {
-        .command = "heap",
-        .help = "Get minimum size of free heap memory that was available during program execution",
-        .hint = NULL,
-        .func = &heap_size,
-    };
-    ESP_ERROR_CHECK(esp_console_cmd_register(&heap_cmd));
 }
 
 /** 'tasks' command prints the list of tasks and related information */

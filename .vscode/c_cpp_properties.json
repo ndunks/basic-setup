@@ -3,7 +3,7 @@
         {
             "name": "XtensaEspIdf",
             "includePath": [
-                //"${workspaceFolder}/main/include",
+                "${workspaceFolder}/main/include",
                 // Local components
                 "${workspaceFolder}/components/*/include",
                 // Generated headers such as "sdkconfig.h"

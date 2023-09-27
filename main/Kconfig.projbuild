@@ -1,0 +1,15 @@
+menu "App Configuration"
+
+    config APP_WIFI_MAX_CLIENT
+        int "AP mode maximum client allowed to connect"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    config APP_WIFI_MAX_RETRY
+        int "STA mode connect maximum retry"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+endmenu
