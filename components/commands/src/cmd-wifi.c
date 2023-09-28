@@ -160,35 +160,52 @@ static struct
     struct arg_end *end;
 } connect_args;
 
-static int cmd_connect(int argc, char **argv)
+static esp_err_t cmd_connect(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **)&connect_args);
+    const char *ssid = NULL, *pass = NULL;
+
     if (nerrors != 0)
     {
         arg_print_errors(stderr, connect_args.end, argv[0]);
         return 1;
     }
-    ESP_LOGI(TAG, "Connecting to '%s'",
-             connect_args.ssid->sval[0]);
 
-    bool connected = app_wifi_connect(connect_args.ssid->sval[0],
-                                      connect_args.password->sval[0]);
+    if (connect_args.ssid->count == 1)
+    {
+        ssid = connect_args.ssid->sval[0];
+        if (connect_args.password->count == 1)
+        {
+            pass = connect_args.password->sval[0];
+        }
+        ESP_LOGI(TAG, "Connecting to '%s'", ssid);
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Connecting to saved ssid");
+    }
+
+    bool connected = app_wifi_connect(ssid, pass);
+
     if (!connected)
     {
         ESP_LOGW(TAG, "Connection failed");
-        return 1;
+        return ESP_FAIL;
     }
-    ESP_LOGI(TAG, "Connected");
-    return 0;
+    return ESP_OK;
 }
 
-static int cmd_disconnect(int argc, char **argv)
+static esp_err_t cmd_disconnect(int argc, char **argv)
 {
-    return esp_wifi_disconnect();
+    return app_wifi_disconnect();
 }
 
 void register_wifi()
 {
+
+    connect_args.ssid = arg_str0(NULL, NULL, "<ssid>", "SSID of AP");
+    connect_args.password = arg_str0(NULL, NULL, "<pass>", "PSK of AP");
+    connect_args.end = arg_end(1);
 
     const esp_console_cmd_t ip_cmd = {
         .command = "ip",
@@ -210,9 +227,6 @@ void register_wifi()
         .func = &cmd_connect,
         .argtable = &connect_args};
 
-    connect_args.ssid = arg_str1(NULL, NULL, "<ssid>", "SSID of AP");
-    connect_args.password = arg_str0(NULL, NULL, "<pass>", "PSK of AP");
-    connect_args.end = arg_end(1);
     ESP_ERROR_CHECK(esp_console_cmd_register(&connect_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&disconnect_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&ip_cmd));

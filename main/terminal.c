@@ -130,7 +130,7 @@ static void terminal_task(void *p)
         }
         else if (err == ESP_OK && ret != ESP_OK)
         {
-            printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(err));
+            printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
         }
         else if (err != ESP_OK)
         {

@@ -16,27 +16,25 @@ static int retry_cntr = 0;
 static void handle_wifi_event(void *arg, esp_event_base_t event_base,
                               int32_t event_id, void *event_data)
 {
-    EventBits_t state = 0;
+    ESP_LOGD(TAG, "Wifi Event %d", event_id);
+    bool auto_connect;
+    uint8_t reason = 0;
+
     switch (event_id)
     {
+
     case WIFI_EVENT_AP_START:
         STATE_SET(STATE_AP_STARTED);
         break;
+
     case WIFI_EVENT_AP_STOP:
         STATE_CLR(STATE_AP_STARTED);
         break;
-    case WIFI_EVENT_STA_START:
-        state = STATE();
-        ESP_LOGI(TAG, "STA start, state %08x", state);
 
-        if ((state & STATE_STA_DISABLE_AUTO_CONNECT) == STATE_STA_DISABLE_AUTO_CONNECT)
-        {
-        }
-        else
-        {
-            esp_wifi_connect();
-            STATE_SET(STATE_STA_CONNECTING | STATE_STA_DISCONNECTED);
-        }
+    case WIFI_EVENT_STA_START:
+        esp_wifi_get_auto_connect(&auto_connect);
+        if (auto_connect)
+            app_wifi_connect(NULL, NULL);
         break;
 
     case WIFI_EVENT_STA_STOP:
@@ -45,54 +43,57 @@ static void handle_wifi_event(void *arg, esp_event_base_t event_base,
         break;
 
     case WIFI_EVENT_STA_CONNECTED:
+        STATE_CLR(STATE_STA_CONNECTING | STATE_STA_FAIL);
         STATE_SET(STATE_STA_CONNECTED);
-        STATE_CLR(STATE_STA_CONNECTING | STATE_STA_FAIL | STATE_STA_DISCONNECTED);
         retry_cntr = 0;
         break;
 
     case WIFI_EVENT_STA_DISCONNECTED:
-        state = STATE_CLR(STATE_STA_CONNECTED);
-        wifi_event_sta_disconnected_t *disconnected = (wifi_event_sta_disconnected_t *)event_data;
 
-        ESP_LOGI(TAG, "Disconnect reason : %d, state %08x", disconnected->reason, state);
-        if (retry_cntr < CONFIG_APP_WIFI_MAX_RETRY)
+        reason = ((wifi_event_sta_disconnected_t *)event_data)->reason;
+        ESP_LOGI(TAG, "Disconnect reason : %d, state %08x", reason, STATE_CURRENT);
+
+        if (reason == WIFI_REASON_ASSOC_LEAVE)
         {
-            if (retry_cntr == 0)
-            {
-                if (disconnected->reason == WIFI_REASON_BASIC_RATE_NOT_SUPPORT)
-                {
-                    /*Switch to 802.11 bgn mode */
-                    esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
-                }
-                else if (disconnected->reason == WIFI_REASON_NO_AP_FOUND)
-                {
-                    // Delay before retry connect
-                    ESP_LOGI(TAG, "Delay before reconnect");
-                    vTaskDelay(5000 / portTICK_PERIOD_MS);
-                }
-            }
-            if ((state & STATE_STA_DISABLE_AUTO_CONNECT) == STATE_STA_DISABLE_AUTO_CONNECT)
-            {
-                ESP_LOGI(TAG, "No retry, auto connect disabled");
-                STATE_SET(STATE_STA_DISCONNECTED);
-            }
-            else
-            {
-                retry_cntr++;
-                ESP_LOGI(TAG, "retry %d to connect to the AP", retry_cntr);
-                esp_wifi_connect();
-                STATE_SET(STATE_STA_CONNECTING | STATE_STA_DISCONNECTED);
-            }
+            // its disconected by user ?
+            ESP_LOGI(TAG, "No retry, disconnected by used");
+            STATE_CLR(STATE_STA_CONNECTING | STATE_STA_FAIL | STATE_STA_CONNECTED);
+            return;
         }
-        else
+
+        if (retry_cntr >= CONFIG_APP_WIFI_MAX_RETRY)
         {
-            STATE_SET(STATE_STA_FAIL | STATE_STA_DISCONNECTED);
             STATE_CLR(STATE_STA_CONNECTING);
+            STATE_SET(STATE_STA_FAIL);
             retry_cntr = 0;
             ESP_LOGW(TAG, "connect to the AP fail");
+            return;
         }
-        break;
-    default:
+
+        // Will reconnect
+        retry_cntr++;
+        STATE_SET(STATE_STA_CONNECTING);
+
+        switch (reason)
+        {
+        case WIFI_REASON_BASIC_RATE_NOT_SUPPORT:
+            /*Switch to 802.11 bgn mode */
+            esp_wifi_set_protocol(ESP_IF_WIFI_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N);
+            break;
+        case WIFI_REASON_NO_AP_FOUND:
+            ESP_LOGI(TAG, "Delay before reconnect");
+            vTaskDelay(10000 / portTICK_PERIOD_MS);
+            break;
+        }
+
+        // check if forced disconect by user
+        if (!STATE_IS(STATE_STA_CONNECTING))
+        {
+            ESP_LOGI(TAG, ("Reconnect aborted by user"));
+            return;
+        }
+        ESP_LOGI(TAG, "retry %d to connect to the AP", retry_cntr);
+        app_wifi_connect(NULL, NULL);
         break;
     }
 }
@@ -108,13 +109,12 @@ static void handle_ip_event(void *arg, esp_event_base_t event_base,
         ESP_LOGI(TAG, "STA got ip:%s",
                  ip4addr_ntoa(&event->ip_info.ip));
         retry_cntr = 0;
-        STATE_SET(STATE_STA_HAS_IP);
+        // STATE_SET(STATE_STA_HAS_IP);
         // Check internet connection
         break;
 
     case IP_EVENT_STA_LOST_IP:
-        ESP_LOGI(TAG, "STA lost ip");
-        STATE_CLR(STATE_STA_HAS_IP);
+        STATE_CLR(STATE_INTERNET_CONNECTED);
         break;
     }
 }
@@ -123,62 +123,71 @@ esp_err_t app_wifi_connect(const char *ssid, const char *pass)
 {
     wifi_mode_t mode;
     esp_err_t err;
-    wifi_config_t wifi_config = {0};
+    EventBits_t bits = STATE();
+
+    if (IS_BITS(STATE_STA_CONNECTED | STATE_STA_CONNECTING, bits))
+    {
+        ESP_LOGI(TAG, "Already connecting %08x", bits);
+        return ESP_OK;
+    }
 
     if ((err = esp_wifi_get_mode(&mode)) != ESP_OK)
         return err;
 
-    strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
-    if (pass)
+    if (ssid)
     {
-        strncpy((char *)wifi_config.sta.password, pass, sizeof(wifi_config.sta.password));
-    }
+        wifi_config_t wifi_config = {0};
+        strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
 
-    STATE_CLR(STATE_STA_DISABLE_AUTO_CONNECT);
-    ESP_ERROR_CHECK(esp_wifi_set_auto_connect(true));
+        if (pass)
+            strncpy((char *)wifi_config.sta.password, pass, sizeof(wifi_config.sta.password));
+
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_set_auto_connect(true));
+    }
 
     // warn: ESP_ERROR_CHECK can cause app exit
     if ((mode & WIFI_MODE_STA) != WIFI_MODE_STA)
     {
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_set_mode(mode | WIFI_MODE_STA));
     }
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_connect());
 
-    int bits = STATE_WAIT(STATE_STA_CONNECTED);
-    return (bits & STATE_STA_CONNECTED) != 0;
+    STATE_CLR(STATE_STA_FAIL);
+    STATE_SET(STATE_STA_CONNECTING);
+    // ret code is -1 (0xffffffff), why?
+    esp_wifi_connect();
+    return ESP_OK;
 }
 
 esp_err_t app_wifi_disconnect(void)
 {
-    STATE_SET(STATE_STA_DISABLE_AUTO_CONNECT);
+    EventBits_t bits = STATE();
 
-    ESP_ERROR_CHECK(esp_wifi_set_auto_connect(false));
-
-    esp_err_t err = esp_wifi_disconnect();
-
-    if (err == ESP_OK)
+    if (IS_BITS(STATE_STA_CONNECTING, bits))
     {
-        EventBits_t bits = STATE_WAIT(STATE_STA_DISCONNECTED);
-        return !((bits & STATE_STA_DISCONNECTED) == STATE_STA_DISCONNECTED);
+        ESP_LOGI(TAG, "Canceling reconnect from cmd");
+        bits = STATE_CLR(STATE_STA_CONNECTING);
     }
 
-    return err;
+    if ((bits & (STATE_STA_CONNECTED | STATE_STA_CONNECTING)))
+    {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_set_auto_connect(false));
+        return esp_wifi_disconnect();
+    }
+    else
+    {
+        ESP_LOGI(TAG, "Sta not connected");
+        return ESP_OK;
+    }
 }
 
 /* Called on system boot */
 esp_err_t app_wifi_start(void)
 {
     uint8_t mac[6];
-    bool vBool;
-    // wifi_config_t config = {0};
     wifi_mode_t mode;
     esp_err_t err;
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
-    uint32_t init_step = 0;
-
-    // Initial state
-    EventBits_t initialState = STATE_STA_DISCONNECTED;
 
     if (esp_efuse_mac_get_default(mac) == ESP_OK)
     {
@@ -189,51 +198,35 @@ esp_err_t app_wifi_start(void)
         ESP_LOGW(TAG, "No efuse mac");
 
     if ((err = esp_mac_init()) != ESP_OK)
-        goto error;
+        goto error0;
 
     tcpip_adapter_init();
 
     if ((err = esp_wifi_init(&init_config)) != ESP_OK)
-        goto error;
+        goto error1;
 
-    if (esp_wifi_get_auto_connect(&vBool) == ESP_OK)
-    {
-        // Disable auto connect on event handle
-        if (!vBool)
-            initialState |= STATE_STA_DISABLE_AUTO_CONNECT;
-        ESP_LOGI(TAG, "Auto connect %d", vBool);
-    }
-
-    STATE_SET(initialState);
-
-    init_step = 1;
     if ((err = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &handle_wifi_event, NULL)) != ESP_OK)
-        goto error;
-    init_step = 2;
+        goto error2;
+
     if ((err = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &handle_ip_event, NULL)) != ESP_OK)
-        goto error;
-    init_step = 3;
+        goto error3;
 
     if ((err = esp_wifi_get_mode(&mode)) != ESP_OK)
-        goto error;
+        goto error3;
 
     if ((err = esp_wifi_start()) != ESP_OK)
-        goto error;
+        goto error3;
 
     return ESP_OK;
 
-error:
+error3:
+    esp_event_handler_unregister(IP_EVENT, ESP_EVENT_ANY_ID, &handle_ip_event);
+error2:
+    esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &handle_wifi_event);
+error1:
+    esp_wifi_deinit();
+error0:
     ESP_LOGE(TAG, "%x app_wifi_start: %s", err, esp_err_to_name(err));
     STATE_SET(STATE_WIFI_ERROR);
-    switch (init_step)
-    {
-    case 3:
-        esp_event_handler_unregister(IP_EVENT, ESP_EVENT_ANY_ID, &handle_ip_event);
-    case 2:
-        esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &handle_wifi_event);
-    case 1:
-        esp_wifi_deinit();
-        break;
-    }
     return err;
 }
