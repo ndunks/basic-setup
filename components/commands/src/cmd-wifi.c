@@ -24,11 +24,15 @@ static void print_interface_info(wifi_interface_t type)
 
     uint8_t *ssid, *password;
 
-    const char *sUnknown = "(!) Unknown";
+    const char *sUnknown = "(!) Unknown",
+               *s_auto_connect = "Auto Connect: %s\n",
+               *s_auth_mode = "Auth Mode: %s\n";
+
+    char if_more[128] = {0};
     const esp_mac_type_t mac_type = type == WIFI_IF_STA ? ESP_MAC_WIFI_STA : ESP_MAC_WIFI_SOFTAP;
     const tcpip_adapter_if_t tcpip_type = type == WIFI_IF_STA ? TCPIP_ADAPTER_IF_STA : TCPIP_ADAPTER_IF_AP;
 
-    printf("\nInterface %s: ", type == WIFI_IF_STA ? "STA" : "AP");
+    printf("\n--- Interface: %s ---\n", type == WIFI_IF_STA ? "STA" : "AP");
 
     if (esp_wifi_get_config(type, &wifi_config) == ESP_OK)
     {
@@ -40,46 +44,73 @@ static void print_interface_info(wifi_interface_t type)
             ssidLen = strlen((const char *)wifi_config.sta.ssid);
             ssid = wifi_config.sta.ssid;
             password = wifi_config.sta.password;
-            if ((bits & STATE_STA_CONNECTING) == STATE_STA_CONNECTING)
-            {
+            if (IS_BITS(STATE_STA_CONNECTING, bits))
                 ifState = "CONNECTING";
-            }
-            else if ((bits & STATE_STA_CONNECTED) == STATE_STA_CONNECTED)
-            {
+            else if (IS_BITS(STATE_STA_CONNECTED, bits))
                 ifState = "CONNECTED";
-            }
-            else if ((bits & STATE_STA_FAIL) == STATE_STA_FAIL)
-            {
+            else if (IS_BITS(STATE_STA_FAIL, bits))
                 ifState = "FAILED";
-            }
             else
-            {
-                ifState = "UNKNWON";
-            }
+                ifState = "DISCONNECTED";
+            bool autoC;
+            esp_wifi_get_auto_connect(&autoC);
+            if (autoC)
+                sprintf(if_more, s_auto_connect, "Yes");
+            else
+                sprintf(if_more, s_auto_connect, "No");
         }
         else
         {
             ssidLen = wifi_config.ap.ssid_len;
             ssid = wifi_config.ap.ssid;
             password = wifi_config.ap.password;
+
             if ((bits & STATE_AP_STARTED) == STATE_AP_STARTED)
-            {
                 ifState = "STARTED";
-            }
             else
-            {
                 ifState = "DISABLED";
+
+            switch (wifi_config.ap.authmode)
+            {
+            case WIFI_AUTH_OPEN:
+                sprintf(if_more, s_auth_mode, "open");
+                break;
+            case WIFI_AUTH_WEP:
+                sprintf(if_more, s_auth_mode, "WEP");
+                break;
+            case WIFI_AUTH_WPA_PSK:
+                sprintf(if_more, s_auth_mode, "WPA_PSK");
+                break;
+            case WIFI_AUTH_WPA2_PSK:
+                sprintf(if_more, s_auth_mode, "WPA2_PSK");
+                break;
+            case WIFI_AUTH_WPA_WPA2_PSK:
+                sprintf(if_more, s_auth_mode, "WPA_WPA2_PSK");
+                break;
+            case WIFI_AUTH_WPA2_ENTERPRISE:
+                sprintf(if_more, s_auth_mode, "WPA2_ENTERPRISE");
+                break;
+            case WIFI_AUTH_WPA3_PSK:
+                sprintf(if_more, s_auth_mode, "WPA3_PSK");
+                break;
+            case WIFI_AUTH_WPA2_WPA3_PSK:
+                sprintf(if_more, s_auth_mode, "WPA2_WPA3_PSK");
+                break;
+            default:
+                sprintf(if_more, s_auth_mode, "Unknown");
+                break;
             }
         }
-        printf("%s\n", ifState);
+        printf("Status: %s\n", ifState);
         if (ssidLen)
         {
-            printf("\tSSID: %s\n\tPassword: %s\n", ssid, password);
+            printf("SSID: %s\nPassword: %s\n", ssid, password);
         }
         else
         {
-            printf("\t(!) Wifi Unconfigured\n");
+            printf("(!) Wifi Unconfigured\n");
         }
+        printf(if_more);
     }
     else
     {
@@ -87,7 +118,7 @@ static void print_interface_info(wifi_interface_t type)
         printf("\n");
     }
 
-    printf("\tMac: ");
+    printf("Mac: ");
     if (esp_read_mac(mac, mac_type) == ESP_OK)
     {
         printf("%02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
@@ -96,7 +127,7 @@ static void print_interface_info(wifi_interface_t type)
     {
         printf(sUnknown);
     }
-    printf("\tIP : ");
+    printf("IP : ");
     if (tcpip_adapter_get_ip_info(tcpip_type, &ip_info) == ESP_OK)
     {
         int cidr = 0;
@@ -128,16 +159,16 @@ static int cmd_ip(int argc, char **argv)
         switch (mode)
         {
         case WIFI_MODE_NULL:
-            printf("null mode");
+            printf("NONE");
             break;
         case WIFI_MODE_STA:
-            printf("WiFi station mode");
+            printf("STA");
             break;
         case WIFI_MODE_AP:
-            printf("WiFi soft-AP mode");
+            printf("AP");
             break;
         case WIFI_MODE_APSTA:
-            printf("WiFi station + soft-AP mode");
+            printf("STA + AP");
             break;
 
         default:
@@ -178,21 +209,9 @@ static esp_err_t cmd_connect(int argc, char **argv)
         {
             pass = connect_args.password->sval[0];
         }
-        ESP_LOGI(TAG, "Connecting to '%s'", ssid);
-    }
-    else
-    {
-        ESP_LOGI(TAG, "Connecting to saved ssid");
     }
 
-    bool connected = app_wifi_connect(ssid, pass);
-
-    if (!connected)
-    {
-        ESP_LOGW(TAG, "Connection failed");
-        return ESP_FAIL;
-    }
-    return ESP_OK;
+    return app_wifi_connect(ssid, pass);
 }
 
 static esp_err_t cmd_disconnect(int argc, char **argv)
