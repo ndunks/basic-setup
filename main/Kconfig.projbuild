@@ -11,5 +11,11 @@ menu "App Configuration"
         default 5
         help
             Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+    
+    config APP_WIFI_ACTION_TIMEOUT
+        int "Wifi Action Timeout"
+        default 10000
+        help
+            Default timeout on Wifi operation
 
 endmenu

@@ -10,7 +10,7 @@
 
 static int cmd_state(int argc, char **argv)
 {
-    EventBits_t bits = xEventGroupGetBits(state);
+    EventBits_t bits = STATE();
     printf("[%d] STA_CONNECTING\n", (bits & STATE_STA_CONNECTING) == STATE_STA_CONNECTING);
     printf("[%d] STA_CONNECTED\n", (bits & STATE_STA_CONNECTED) == STATE_STA_CONNECTED);
     printf("[%d] STA_FAIL\n", (bits & STATE_STA_FAIL) == STATE_STA_FAIL);
@@ -26,7 +26,7 @@ void app_main()
 {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    state = xEventGroupCreate();
+    APP_STATE = xEventGroupCreate();
     // initialize_nvs();
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(app_wifi_start());
