@@ -10,6 +10,7 @@
 #include "linenoise/linenoise.h"
 #include "argtable3/argtable3.h"
 #include "commands.h"
+#include "terminal.h"
 
 #define TAG "terminal"
 
@@ -65,28 +66,20 @@ void initialize_terminal()
 
     /* Set command history size */
     linenoiseHistorySetMaxLen(100);
-    /* Register commands */
+    /* Register component commands */
+    register_commands();
     esp_console_register_help_command();
-    register_system();
-    register_wifi();
-
-    printf("\n"
-           "Type 'help' to get the list of commands.\n"
-           "Use UP/DOWN arrows to navigate through command history.\n"
-           "Press TAB when typing command name to auto-complete.\n");
 
     /* Figure out if the terminal supports escape sequences */
     int probe_status = linenoiseProbe();
     if (probe_status)
     { /* zero indicates success */
-        printf("\n"
-               "Your terminal application does not support escape sequences.\n"
-               "Line editing and history features are disabled.\n"
-               "On Windows, try using Putty instead.\n");
+        printf("\n(!) Limited terminal.\n");
         linenoiseSetDumbMode(1);
     }
 
-    xTaskCreate(&terminal_task, TAG, 2048, NULL, 3, NULL);
+    BaseType_t ret = xTaskCreate(&terminal_task, TAG, 2048, NULL, 3, &terminal_task_handle);
+    
 }
 
 static void terminal_task(void *p)
@@ -94,13 +87,13 @@ static void terminal_task(void *p)
     /* Prompt to be printed before each line.
      * This can be customized, made dynamic, etc.
      */
-    const char *prompt = LOG_COLOR_I "esp8266> " LOG_RESET_COLOR;
+    const char *prompt = LOG_COLOR_I "#> " LOG_RESET_COLOR;
 
 #if CONFIG_LOG_COLORS
     /* Since the terminal doesn't support escape sequences,
      * don't use color codes in the prompt.
      */
-    prompt = "esp8266> ";
+    prompt = "#> ";
 #endif // CONFIG_LOG_COLORS
 
     /* Main loop */
@@ -130,7 +123,7 @@ static void terminal_task(void *p)
         }
         else if (err == ESP_OK && ret != ESP_OK)
         {
-            printf("Command returned non-zero error code: 0x%x (%s)\n", ret, esp_err_to_name(ret));
+            printf("Return error: 0x%x (%s)\n", ret, esp_err_to_name(ret));
         }
         else if (err != ESP_OK)
         {

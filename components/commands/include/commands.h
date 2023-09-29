@@ -1,14 +1,14 @@
 #pragma once
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-// Register system functions
-void register_system();
-
-// Register WiFi functions
-void register_wifi();
+    void register_commands();
+    void register_system();
+    void register_wifi();
+    void register_ping();
 
 #ifdef __cplusplus
 }

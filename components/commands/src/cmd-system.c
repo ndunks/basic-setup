@@ -5,13 +5,10 @@
 #include "esp_attr.h"
 #include "esp_console.h"
 #include "esp_system.h"
-#include "esp_sleep.h"
 #include "esp_spi_flash.h"
 #include "argtable3/argtable3.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/uart.h"
-#include "rom/uart.h"
 #include "sdkconfig.h"
 #include "commands.h"
 

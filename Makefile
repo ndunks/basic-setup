@@ -32,6 +32,7 @@ http_parser \
 pthread \
 esp_gdbstub \
 console \
+mdns \
 
 
 EXCLUDE_COMPONENTS := \
@@ -45,7 +46,6 @@ freemodbus \
 jsmn \
 json \
 libsodium \
-mdns \
 mqtt \
 openssl \
 protobuf-c \
