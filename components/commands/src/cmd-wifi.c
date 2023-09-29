@@ -12,6 +12,7 @@
 #include "commands.h"
 #include "state.h"
 #include "wifi.h"
+#include "colors.h"
 
 #define TAG "cmd_wifi"
 
@@ -45,19 +46,19 @@ static void print_interface_info(wifi_interface_t type)
             ssid = wifi_config.sta.ssid;
             password = wifi_config.sta.password;
             if (IS_BITS(STATE_STA_CONNECTING, bits))
-                ifState = "CONNECTING";
+                ifState = COLOR_INFO("CONNECTING");
             else if (IS_BITS(STATE_STA_CONNECTED, bits))
-                ifState = "CONNECTED";
+                ifState = COLOR_OK("CONNECTED");
             else if (IS_BITS(STATE_STA_FAIL, bits))
-                ifState = "FAILED";
+                ifState = COLOR_ERR("FAILED");
             else
-                ifState = "DISCONNECTED";
+                ifState = COLOR_WARN("DISCONNECTED");
             bool autoC;
             esp_wifi_get_auto_connect(&autoC);
             if (autoC)
-                sprintf(if_more, s_auto_connect, "Yes");
+                sprintf(if_more, s_auto_connect, COLOR_OK("Yes"));
             else
-                sprintf(if_more, s_auto_connect, "No");
+                sprintf(if_more, s_auto_connect, COLOR_ERR("No"));
         }
         else
         {
@@ -66,9 +67,9 @@ static void print_interface_info(wifi_interface_t type)
             password = wifi_config.ap.password;
 
             if ((bits & STATE_AP_STARTED) == STATE_AP_STARTED)
-                ifState = "STARTED";
+                ifState = COLOR_OK("STARTED");
             else
-                ifState = "DISABLED";
+                ifState = COLOR_ERR("STOPPED");
 
             switch (wifi_config.ap.authmode)
             {
@@ -219,11 +220,39 @@ static esp_err_t cmd_disconnect(int argc, char **argv)
     return app_wifi_disconnect();
 }
 
+static esp_err_t cmd_ap_start(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&connect_args);
+    const char *ssid = NULL, *pass = NULL;
+
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, connect_args.end, argv[0]);
+        return 1;
+    }
+
+    if (connect_args.ssid->count == 1)
+    {
+        ssid = connect_args.ssid->sval[0];
+        if (connect_args.password->count == 1)
+        {
+            pass = connect_args.password->sval[0];
+        }
+    }
+
+    return app_wifi_ap_start(ssid, pass);
+}
+
+static esp_err_t cmd_ap_stop(int argc, char **argv)
+{
+    return app_wifi_ap_stop();
+}
+
 void register_wifi()
 {
 
-    connect_args.ssid = arg_str0(NULL, NULL, "<ssid>", "SSID of AP");
-    connect_args.password = arg_str0(NULL, NULL, "<pass>", "PSK of AP");
+    connect_args.ssid = arg_str0(NULL, NULL, "<ssid>", "SSID");
+    connect_args.password = arg_str0(NULL, NULL, "<pass>", "Password");
     connect_args.end = arg_end(1);
 
     const esp_console_cmd_t ip_cmd = {
@@ -232,6 +261,7 @@ void register_wifi()
         .hint = NULL,
         .func = &cmd_ip,
         .argtable = NULL};
+
     const esp_console_cmd_t disconnect_cmd = {
         .command = "disconnect",
         .help = "Disconnect wifi STA from AP",
@@ -246,7 +276,23 @@ void register_wifi()
         .func = &cmd_connect,
         .argtable = &connect_args};
 
+    const esp_console_cmd_t stop_cmd = {
+        .command = "stop",
+        .help = "Stop AP",
+        .hint = NULL,
+        .func = &cmd_ap_stop,
+        .argtable = NULL};
+
+    const esp_console_cmd_t start_cmd = {
+        .command = "start",
+        .help = "Join WiFi AP as a station",
+        .hint = NULL,
+        .func = &cmd_ap_start,
+        .argtable = &connect_args};
+
     ESP_ERROR_CHECK(esp_console_cmd_register(&connect_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&disconnect_cmd));
+    ESP_ERROR_CHECK(esp_console_cmd_register(&start_cmd));
+    ESP_ERROR_CHECK(esp_console_cmd_register(&stop_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&ip_cmd));
 }
