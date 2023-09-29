@@ -11,6 +11,7 @@
 #include "argtable3/argtable3.h"
 #include "commands.h"
 #include "terminal.h"
+#include "actuator.h"
 
 #define TAG "terminal"
 
@@ -68,6 +69,7 @@ void initialize_terminal()
     linenoiseHistorySetMaxLen(100);
     /* Register component commands */
     register_commands();
+    actuator_register_command();
     esp_console_register_help_command();
 
     /* Figure out if the terminal supports escape sequences */
