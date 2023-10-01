@@ -8,6 +8,7 @@
 #include "terminal.h"
 #include "actuator.h"
 #include "wifi.h"
+#include "web.h"
 #include "driver/gpio.h"
 
 static int cmd_state(int argc, char **argv)
@@ -49,6 +50,8 @@ void app_main()
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(app_wifi_start());
 
+    web_main();
+
     initialize_terminal();
 
     const esp_console_cmd_t state_cmd = {
@@ -59,5 +62,6 @@ void app_main()
         .argtable = NULL};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&state_cmd));
+
     //xTaskCreate(&blink_test, "blink", 1024, NULL, 2, NULL);
 }

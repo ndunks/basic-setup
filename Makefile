@@ -33,13 +33,13 @@ pthread \
 esp_gdbstub \
 console \
 mdns \
+esp_http_server \
 
 
 EXCLUDE_COMPONENTS := \
 coap \
 esp-wolfssl \
 esp_http_client \
-esp_http_server \
 esp_https_ota \
 fatfs \
 freemodbus \
