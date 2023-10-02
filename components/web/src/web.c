@@ -15,15 +15,46 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "web.h"
+#include <http_parser.h>
 
-#include <esp_http_server.h>
+#include "esp_http_server.h"
+#include "esp_httpd_priv.h"
 
 static const char *TAG = "web";
 
 /* An HTTP GET handler */
-static esp_err_t get_handler(httpd_req_t *req)
+static esp_err_t get_handler(httpd_req_t *req, struct http_parser_url *res)
 {
-    const webfs_t *f = &web_files[INDEX_HTML_OFS];
+    const char *path = req->uri + res->field_data[UF_PATH].off;
+    char path_len = res->field_data[UF_PATH].len;
+
+    webfs_t *f = &web_files[INDEX_HTML_OFS];
+
+    if (req->method != HTTP_GET)
+    {
+        return httpd_resp_send_err(req, HTTPD_404_NOT_FOUND);
+    }
+
+    printf("REQURL %s %s %d\n", req->uri, path, path_len);
+    /* URL parser result contains offset and length of path string */
+    if (res->field_set & (1 << UF_PATH) && path_len > 1)
+    {
+
+        // uri = httpd_find_uri_handler2(&err, hd,
+        //                               req->uri + res->field_data[UF_PATH].off,
+        //                               res->field_data[UF_PATH].len,
+        //                               req->method);
+        // Find matched file name
+        for (int i = 0; i < ((sizeof web_files) / sizeof(webfs_t)); i++)
+        {
+            webfs_t *tmpf = &web_files[i];
+            if (strncmp(tmpf->name, path + 1, path_len - 1) == 0)
+            {
+                f = tmpf;
+            }
+        }
+    }
+
     // char bufs[64];
 
     // todo: matching with URL here
@@ -51,22 +82,24 @@ static esp_err_t get_handler(httpd_req_t *req)
 
 httpd_handle_t start_webserver(void)
 {
-    httpd_uri_t default_handler = {
-        .uri = "/",
-        .method = HTTP_GET,
-        .handler = get_handler,
-        .user_ctx = NULL};
+    // httpd_uri_t default_handler = {
+    //     .uri = "*",
+    //     .method = HTTP_GET,
+    //     .handler = get_handler,
+    //     .user_ctx = NULL};
 
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.max_uri_handlers = 1; // for websocket ?
+    config.default_handler = &get_handler;
 
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK)
     {
         // Set URI handlers
-        ESP_LOGI(TAG, "Registering URI handlers");
-        ESP_ERROR_CHECK_WITHOUT_ABORT(httpd_register_uri_handler(server, &default_handler));
+        // ESP_LOGI(TAG, "Registering URI handlers");
+        // ESP_ERROR_CHECK_WITHOUT_ABORT(httpd_register_uri_handler(server, &default_handler));
         return server;
     }
 
@@ -118,11 +151,12 @@ void web_main()
 
     server = start_webserver();
 
-    for (int i = 0; i < ((sizeof web_files)/sizeof (webfs_t)); i ++){
+    for (int i = 0; i < ((sizeof web_files) / sizeof(webfs_t)); i++)
+    {
         const webfs_t *f = &web_files[i];
 
         printf("WebFiles %d, %s, %s\n", i, f->name, f->type);
     }
-    //printf("%p %s\n", web_bin_start, &web_bin_start[1]);
 
+    // printf("%p %s\n", web_bin_start, &web_bin_start[1]);
 }

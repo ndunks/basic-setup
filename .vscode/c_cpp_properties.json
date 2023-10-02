@@ -5,6 +5,10 @@
             "includePath": [
                 "${workspaceFolder}/main/include",
                 "${workspaceFolder}/components/*/include",
+                "${workspaceFolder}/components/httpd/src",
+                "${workspaceFolder}/components/httpd/src/util",
+                "${workspaceFolder}/components/httpd/src/port/esp8266",
+                "${workspaceFolder}/components/httpd/include",
                 "${workspaceFolder}/build/include",
                 "~/app/xtensa-lx106-elf/include",
                 "~/app/ESP8266_RTOS_SDK/components/*/include",

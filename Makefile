@@ -33,11 +33,11 @@ pthread \
 esp_gdbstub \
 console \
 mdns \
-esp_http_server \
 
 
 EXCLUDE_COMPONENTS := \
 coap \
+esp_http_server \
 esp-wolfssl \
 esp_http_client \
 esp_https_ota \
