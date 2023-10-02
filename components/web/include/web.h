@@ -6,15 +6,15 @@ extern "C"
 #endif
 #include <stdint.h>
 
-    extern const char *web_bin_start asm("_binary_web_bin_start");
-    extern const char *web_bin_end asm("_binary_web_bin_end");
+    extern const char web_bin_start[] asm("_binary_web_bin_start");
+    extern const char web_bin_end[] asm("_binary_web_bin_end");
 
     void web_main(void);
 
-    typedef struct webfs
+    typedef struct
     {
-        const char *name;
-        const char *type;
+        const char *const name;
+        const char *const type;
         bool gzip;
         uint32_t offset;
         uint32_t size;
@@ -37,7 +37,7 @@ extern "C"
 
 #define INDEX_HTML_OFS 3
     // Total size: 87663 bytes
-    // Generated at 10/1/2023, 7:40:26 PM
+    // Generated at 10/2/2023, 9:57:27 AM
     /* GENERATED CODE END */
 #ifdef __cplusplus
 }

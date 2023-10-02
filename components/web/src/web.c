@@ -37,7 +37,7 @@ static esp_err_t get_handler(httpd_req_t *req)
     }
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(
-        httpd_resp_send(req, web_bin_start + f->offset, f->size));
+        httpd_resp_send(req, &web_bin_start[f->offset], f->size));
     // httpd_resp_send(req, "HELO", 4);
 
     /* After sending the HTTP response the old HTTP request
@@ -117,4 +117,12 @@ void web_main()
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
 
     server = start_webserver();
+
+    for (int i = 0; i < ((sizeof web_files)/sizeof (webfs_t)); i ++){
+        const webfs_t *f = &web_files[i];
+
+        printf("WebFiles %d, %s, %s\n", i, f->name, f->type);
+    }
+    //printf("%p %s\n", web_bin_start, &web_bin_start[1]);
+
 }

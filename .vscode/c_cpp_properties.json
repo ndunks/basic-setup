@@ -4,15 +4,10 @@
             "name": "XtensaEspIdf",
             "includePath": [
                 "${workspaceFolder}/main/include",
-                // Local components
                 "${workspaceFolder}/components/*/include",
-                // Generated headers such as "sdkconfig.h"
                 "${workspaceFolder}/build/include",
-                // Lib C
                 "~/app/xtensa-lx106-elf/include",
-                // Component default includes
                 "~/app/ESP8266_RTOS_SDK/components/*/include",
-                // Component specific includes
                 "~/app/ESP8266_RTOS_SDK/components/console",
                 "~/app/ESP8266_RTOS_SDK/components/freertos/include/freertos",
                 "~/app/ESP8266_RTOS_SDK/components/freertos/include/freertos/private",
@@ -30,8 +25,8 @@
                 "__ESP_FILE__=\"dummy.c\""
             ],
             "compilerPath": "~/app/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc",
-            "cStandard": "c17",
-            "cppStandard": "c++14",
+            "cStandard": "c99",
+            "cppStandard": "gnu++23",
             "intelliSenseMode": "linux-gcc-arm"
         }
     ],
