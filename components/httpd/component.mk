@@ -1,5 +1,0 @@
-
-COMPONENT_SRCDIRS := src src/util
-COMPONENT_ADD_INCLUDEDIRS := include src/port/esp8266 src/util
-#COMPONENT_PRIV_INCLUDEDIRS :=
-

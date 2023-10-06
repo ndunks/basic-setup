@@ -8,7 +8,7 @@
 #include "terminal.h"
 #include "actuator.h"
 #include "wifi.h"
-#include "web.h"
+#include "web-server.h"
 #include "driver/gpio.h"
 
 static int cmd_state(int argc, char **argv)
@@ -50,7 +50,7 @@ void app_main()
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(app_wifi_start());
 
-    web_main();
+    web_server_main();
 
     initialize_terminal();
 

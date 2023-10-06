@@ -10,7 +10,7 @@ const { createInterface } = require("readline");
 const { getType } = require("mime");
 
 
-const targetHeader = resolve(__dirname, "include/web.h");
+const targetHeader = resolve(__dirname, "include/web-server.h");
 const sourceDirs = resolve(__dirname, "dist");
 const targetFile = openSync(resolve(__dirname, "web.bin"), "w+");
 
@@ -39,6 +39,8 @@ closeSync(targetFile)
 /** @type {string[]} */
 const headerBuffers = [];
 
+const defaultMime = "text/html";
+
 function writeStructs() {
 
     let str = '', isLast = ''
@@ -49,30 +51,45 @@ function writeStructs() {
     /** @type {string[]} */
     const web_files = []
     let indexOffset = 0
-
-    web_files.push(`\n    static const webfs_t web_files[] = {`)
+    let webFileNameMax = 0;
+    web_files.push(`\nstatic webfs_t const web_files[] = {`)
     allStructs.forEach(({ name, size, offset }, i, a) => {
         isLast = (i + 1) == a.length
         let isGzip = false
+        let mimeStr = '';
+
         if (name.endsWith('.gz')) {
             isGzip = true
             name = name.slice(0, -3)
         }
-        const typeStr = getType(name) || 'application/octet-stream'
-        let typeIndex = mimes.indexOf(typeStr)
-        if (typeIndex < 0) {
-            typeIndex = mimes.push(typeStr) - 1
+        
+        if( name.length > webFileNameMax ){
+            webFileNameMax = name.length
         }
+
+        const typeStr = getType(name) || 'application/octet-stream'
+
+        if( typeStr != defaultMime){
+            let typeIndex = mimes.indexOf(typeStr)
+            if (typeIndex < 0) {
+                typeIndex = mimes.push(typeStr) - 1
+            }
+            mimeStr = `web_mimes[${typeIndex}]`
+        }else{
+            mimeStr = 'web_default_mime'
+        }
+
 
         if( name == 'index.html' ){
             indexOffset = i
         }
         
-        str = `        {.name = ${JSON.stringify(name)}, .type = web_mimes[${typeIndex}],` +
+        str = `    {.name = ${JSON.stringify(name)}, .type = ${mimeStr},` +
         ` .gzip = ${isGzip ? 'true' : 'false'}, .offset = ${offset}, .size = ${size}}`
         web_files.push(str + (isLast ? '};\n' : ','))
     })
     web_files.push(`#define INDEX_HTML_OFS ${indexOffset}`)
+    web_files.push(`#define WEB_FILE_NAME_MAX ${webFileNameMax}`)
 
     web_mimes.push(`\n    static const char *const web_mimes[] = {`)
     mimes.forEach((name, i, a) => {

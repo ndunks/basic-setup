@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check build-only",
-    "postbuild": "echo $(( `cat dist/* | wc -c` / 1024)) KB",
+    "postbuild": "node web.js",
+    "size": "echo $(( `cat dist/* | wc -c` / 1024)) KB",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"

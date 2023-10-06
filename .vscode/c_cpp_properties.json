@@ -5,10 +5,6 @@
             "includePath": [
                 "${workspaceFolder}/main/include",
                 "${workspaceFolder}/components/*/include",
-                "${workspaceFolder}/components/httpd/src",
-                "${workspaceFolder}/components/httpd/src/util",
-                "${workspaceFolder}/components/httpd/src/port/esp8266",
-                "${workspaceFolder}/components/httpd/include",
                 "${workspaceFolder}/build/include",
                 "~/app/xtensa-lx106-elf/include",
                 "~/app/ESP8266_RTOS_SDK/components/*/include",
@@ -29,8 +25,8 @@
                 "__ESP_FILE__=\"dummy.c\""
             ],
             "compilerPath": "~/app/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc",
-            "cStandard": "c99",
-            "cppStandard": "gnu++23",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++11",
             "intelliSenseMode": "linux-gcc-arm"
         }
     ],
