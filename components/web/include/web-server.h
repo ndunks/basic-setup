@@ -9,7 +9,6 @@ extern const char web_bin_end[] asm("_binary_web_bin_end");
 
 void web_server_main();
 
-
 typedef struct
 {
     const char *const name;
@@ -19,7 +18,7 @@ typedef struct
     uint32_t size;
 } webfs_t;
 
-static const char *const web_default_mime = "text/html";
+static const char const web_default_mime[] = "text/html";
 
 // Generate command: node web.js
 /* GENERATED CODE START */
@@ -38,6 +37,6 @@ static webfs_t const web_files[] = {
 #define INDEX_HTML_OFS 3
 #define WEB_FILE_NAME_MAX 18
     // Total size: 87673 bytes
-    // Generated at 10/6/2023, 10:18:55 PM
+    // Generated at 10/7/2023, 8:50:38 AM
 /* GENERATED CODE END */
 #endif

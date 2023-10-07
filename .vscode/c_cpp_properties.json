@@ -25,9 +25,9 @@
                 "__ESP_FILE__=\"dummy.c\""
             ],
             "compilerPath": "~/app/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc",
-            "cStandard": "gnu11",
+            "cStandard": "c11",
             "cppStandard": "gnu++11",
-            "intelliSenseMode": "linux-gcc-arm"
+            "intelliSenseMode": "${default}"
         }
     ],
     "version": 4

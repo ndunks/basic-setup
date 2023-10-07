@@ -106,6 +106,10 @@ static esp_err_t http_handler()
         goto jmp_end;
     }
 
+    // Todo: check if request is wss://
+    // check for available slot for handling websocket, response too many if no slot
+    // handle web socket using 1 thread, shared buffer for state, eg: authenticated or not.
+
     char *path = http_buf + 5; // remove: GET /
     char *endPath = strchr(path, ' ');
     // Default to index.html, its SPA web
