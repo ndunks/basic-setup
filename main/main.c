@@ -45,14 +45,14 @@ void app_main()
 
     APP_STATE = xEventGroupCreate();
 
-    // todo: load last state from storage
-    actuator_setup(0b11111111u);
-
     ESP_ERROR_CHECK_WITHOUT_ABORT(app_wifi_start());
 
     web_server_main();
 
     initialize_terminal();
+
+    // todo: load last state from storage
+    actuator_setup(0b11111111u);
 
     const esp_console_cmd_t state_cmd = {
         .command = "state",

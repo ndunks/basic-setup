@@ -7,16 +7,18 @@
 #include "esp_event.h"
 
 #include "web-server.h"
+#include "web-socket.h"
 
 #define TAG "WEBSERVER"
-#define HTTP_BUF_SIZE 512
+#define HTTP_BUF_SIZE 2048
 #define HTTP_LISTEN_PORT 80
 /** how many incoming connections can queue up if your application isn't accept()ing */
 #define HTTP_LISTEN_BACKLOG 2
 #define HTTP_STATUS_200_OK 200
 #define HTTP_STATUS_404_NOT_FOUND 404
 #define HTTP_STATUS_400_BAD_REQUEST 400
-#define HTTP_STATUS_501_METHOD_NOT 501
+#define HTTP_STATUS_501_NOT_IMPLEMENTED 501
+#define HTTP_STATUS_429_TO_MANY 429
 
 /**
  * Usefull links
@@ -45,14 +47,14 @@ static esp_err_t http_response(const char *type, int size, const char *body, int
     case HTTP_STATUS_200_OK:
         status = "200 OK";
         break;
-    // case HTTP_STATUS_404_NOT_FOUND:
-    //     status = "404 Not Found";
-    //     break;
+    case HTTP_STATUS_429_TO_MANY:
+        status = "429 Too Many Requests";
+        break;
     case HTTP_STATUS_400_BAD_REQUEST:
         status = "400 Bad Request";
         break;
-    case HTTP_STATUS_501_METHOD_NOT:
-        status = "501 Method Not Implemented";
+    case HTTP_STATUS_501_NOT_IMPLEMENTED:
+        status = "501 Not Implemented";
         break;
     default:
         status = "500 Server Error";
@@ -82,33 +84,38 @@ static esp_err_t http_response(const char *type, int size, const char *body, int
 
 static esp_err_t http_handler()
 {
-    ssize_t len, readed;
+    ssize_t http_header_len;
+    int len, i;
 
     if (ioctlsocket(client_fd, FIONREAD, &len))
     {
         ESP_LOGI(TAG, "Req sz %u", len);
     }
 
-    readed = recv(client_fd, http_buf, HTTP_BUF_SIZE, 0);
-    http_buf[readed] = 0;
-    ESP_LOGI(TAG, "%u bytes\n%s", readed, http_buf);
-    // Minimal content is:
+    http_header_len = recv(client_fd, http_buf, HTTP_BUF_SIZE, 0);
+    http_buf[http_header_len] = 0;
+    //ESP_LOGI(TAG, "%u bytes\n%s", http_header_len, http_buf);
+
+    // Minimal expected content is:
     // GET / HTTP/1.1\r\n\r\n (18 byte)
-    if (readed < 18)
+    if (http_header_len < 18)
     {
-        http_response(web_default_mime, 0, NULL, HTTP_STATUS_400_BAD_REQUEST, false, false);
+        http_response(web_mime_text_html, 0, NULL, HTTP_STATUS_400_BAD_REQUEST, false, false);
+        goto jmp_end;
+    }
+
+    // validating http request header
+    if (strncmp(&http_buf[http_header_len - 4], "\r\n\r\n", 4) != 0)
+    {
+        http_response(web_mime_text_html, 0, NULL, HTTP_STATUS_400_BAD_REQUEST, false, false);
         goto jmp_end;
     }
 
     if (strncmp(http_buf, "GET", 3) != 0)
     {
-        http_response(web_default_mime, 0, NULL, HTTP_STATUS_501_METHOD_NOT, false, false);
+        http_response(web_mime_text_html, 0, NULL, HTTP_STATUS_501_NOT_IMPLEMENTED, false, false);
         goto jmp_end;
     }
-
-    // Todo: check if request is wss://
-    // check for available slot for handling websocket, response too many if no slot
-    // handle web socket using 1 thread, shared buffer for state, eg: authenticated or not.
 
     char *path = http_buf + 5; // remove: GET /
     char *endPath = strchr(path, ' ');
@@ -117,17 +124,34 @@ static esp_err_t http_handler()
 
     if (!endPath)
     {
-        http_response(web_default_mime, 0, NULL, HTTP_STATUS_400_BAD_REQUEST, false, false);
+        http_response(web_mime_text_html, 0, NULL, HTTP_STATUS_400_BAD_REQUEST, false, false);
         goto jmp_end;
     }
-
-    *endPath = 0;
+    // replace space with null
+    //*endPath = 0;
     int path_len = endPath - path;
 
-    ESP_LOGI(TAG, "Path (%d) %s", path_len, path);
+    //ESP_LOGI(TAG, "Path (%d) %s", path_len, path);
+
     if (path_len > 1 && path_len <= WEB_FILE_NAME_MAX)
     {
-        for (int i = 0; i < ((sizeof web_files) / sizeof(webfs_t)); i++)
+        // Check for wss
+        if (strncmp(path, "ws", 2) == 0)
+        {
+            i = ws_accept(client_fd, http_buf, http_header_len);
+
+            if (i == ESP_OK)
+                return ESP_OK;
+
+            if (i == WS_ERR_TOO_MANY_CLIENT)
+            {
+                http_response(web_mime_text_html, 0, NULL, HTTP_STATUS_429_TO_MANY, false, false);
+                goto jmp_end;
+            }
+            // just return, closed in web-socket
+            return ESP_OK;
+        }
+        for (i = 0; i < ((sizeof web_files) / sizeof(webfs_t)); i++)
         {
             const webfs_t *tmpf = &web_files[i];
             if (strncmp(tmpf->name, path, path_len) == 0)
@@ -170,7 +194,7 @@ static void http_thread(void *arg)
 
         ESP_LOGI(TAG, "Client FD %d", client_fd);
 
-        setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
+        //setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
         setsockopt(client_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv));
         http_handler();
     }
@@ -266,6 +290,8 @@ static void http_stop(void *arg, esp_event_base_t event_base,
 
 void web_server_main()
 {
+    // Websocket setup
+    web_socket_main();
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &http_start, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &http_stop, NULL));
 

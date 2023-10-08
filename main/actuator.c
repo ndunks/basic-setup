@@ -4,6 +4,8 @@
 #include "argtable3/argtable3.h"
 #include "FreeRTOS.h"
 #include "freertos/task.h"
+#include "main.h"
+#include "web-socket.h"
 
 // GPIO12 -> SHCP (Shift Register Clock Input)
 #define ACTUATOR_PIN_CLOCK GPIO_NUM_12
@@ -49,6 +51,9 @@ void actuator_update(unsigned char value)
     vTaskDelay(1);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
     vTaskDelay(1);
+    char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
+    actuator_value = value;
+    ws_sendframe(NULL, &ws_msg, 2, WS_FR_OP_BIN);
 }
 
 static struct

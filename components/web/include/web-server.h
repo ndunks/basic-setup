@@ -18,25 +18,22 @@ typedef struct
     uint32_t size;
 } webfs_t;
 
-static const char const web_default_mime[] = "text/html";
-
 // Generate command: node web.js
 /* GENERATED CODE START */
-
-    static const char *const web_mimes[] = {
-        "image/png",
-        "application/javascript",
-        "text/css"};
+static const char web_mime_image_png[] = "image/png";
+static const char web_mime_application_javascript[] = "application/javascript";
+static const char web_mime_text_css[] = "text/css";
+static const char web_mime_text_html[] = "text/html";
 
 static webfs_t const web_files[] = {
-    {.name = "favicon.png", .type = web_mimes[0], .gzip = false, .offset = 0, .size = 772},
-    {.name = "index-09553b7f.js", .type = web_mimes[1], .gzip = true, .offset = 772, .size = 54175},
-    {.name = "index-cbe7d8f5.css", .type = web_mimes[2], .gzip = true, .offset = 54947, .size = 32049},
-    {.name = "index.html", .type = web_default_mime, .gzip = true, .offset = 86996, .size = 677}};
+    {.name = "favicon.png", .type = web_mime_image_png, .gzip = false, .offset = 0, .size = 772},
+    {.name = "index-09553b7f.js", .type = web_mime_application_javascript, .gzip = true, .offset = 772, .size = 54175},
+    {.name = "index-cbe7d8f5.css", .type = web_mime_text_css, .gzip = true, .offset = 54947, .size = 32049},
+    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 86996, .size = 677}};
 
 #define INDEX_HTML_OFS 3
 #define WEB_FILE_NAME_MAX 18
     // Total size: 87673 bytes
-    // Generated at 10/7/2023, 8:50:38 AM
+    // Generated at 10/7/2023, 9:15:01 AM
 /* GENERATED CODE END */
 #endif

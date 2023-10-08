@@ -44,8 +44,8 @@ const defaultMime = "text/html";
 function writeStructs() {
 
     let str = '', isLast = ''
-    /** @type {string[]} */
-    const mimes = [];
+    /** @type {Map<string,string>} */
+    const mimes = new Map();
     /** @type {string[]} */
     const web_mimes = []
     /** @type {string[]} */
@@ -56,7 +56,7 @@ function writeStructs() {
     allStructs.forEach(({ name, size, offset }, i, a) => {
         isLast = (i + 1) == a.length
         let isGzip = false
-        let mimeStr = '';
+        let typeName = ''
 
         if (name.endsWith('.gz')) {
             isGzip = true
@@ -68,35 +68,33 @@ function writeStructs() {
         }
 
         const typeStr = getType(name) || 'application/octet-stream'
-
-        if( typeStr != defaultMime){
-            let typeIndex = mimes.indexOf(typeStr)
-            if (typeIndex < 0) {
-                typeIndex = mimes.push(typeStr) - 1
-            }
-            mimeStr = `web_mimes[${typeIndex}]`
+        if (mimes.has(typeStr)) {
+            typeName = mimes.get(typeStr)
         }else{
-            mimeStr = 'web_default_mime'
+            typeName = 'web_mime_' + typeStr.replaceAll(/[\-\\/]/g,'_')
+            mimes.set(typeStr, typeName)
         }
-
 
         if( name == 'index.html' ){
             indexOffset = i
         }
         
-        str = `    {.name = ${JSON.stringify(name)}, .type = ${mimeStr},` +
+        str = `    {.name = ${JSON.stringify(name)}, .type = ${typeName},` +
         ` .gzip = ${isGzip ? 'true' : 'false'}, .offset = ${offset}, .size = ${size}}`
         web_files.push(str + (isLast ? '};\n' : ','))
     })
     web_files.push(`#define INDEX_HTML_OFS ${indexOffset}`)
     web_files.push(`#define WEB_FILE_NAME_MAX ${webFileNameMax}`)
 
-    web_mimes.push(`\n    static const char *const web_mimes[] = {`)
-    mimes.forEach((name, i, a) => {
-        isLast = (i + 1) == a.length
-        str = `        ${JSON.stringify(name)}`
-        web_mimes.push(str + (isLast ? '};' : ','))
-    })
+    //web_mimes.push(`\n    static const char *const web_mimes[] = {`)
+    for( let typeStr of mimes.keys()){
+        web_mimes.push(`static const char ${mimes.get(typeStr)}[] = ${JSON.stringify(typeStr)};`)  
+    }
+    // mimes.entries.forEach((name, i, a) => {
+    //     isLast = (i + 1) == a.length
+    //     str = `    static const char ${JSON.stringify(name)}`
+    //     web_mimes.push(str + (isLast ? '};' : ','))
+    // })
     headerBuffers.push(...web_mimes)
     headerBuffers.push(...web_files)
 }
