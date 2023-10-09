@@ -48,7 +48,20 @@ void ws_onmessage(ws_cli_conn_t *client,
 {
     char *cli = ws_getaddress(client);
     printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
+    if (size == 2)
+    {
+        switch (msg[0])
+        {
+        case WS_MSG_ID_ACTUATOR:
+            // Update actuator value
+            actuator_update(msg[1]);
+            /* code */
+            break;
 
+        default:
+            break;
+        }
+    }
     /**
      * Mimicks the same frame type received and re-send it again
      *

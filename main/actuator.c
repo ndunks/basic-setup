@@ -14,6 +14,8 @@
 // GPIO14 -> STCP (Storage Register Clock Input)
 #define ACTUATOR_PIN_STCP GPIO_NUM_14
 
+unsigned char actuator_value = 0x00;
+
 void actuator_setup(unsigned char initial_value)
 {
 
@@ -28,7 +30,7 @@ void actuator_setup(unsigned char initial_value)
     gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
     gpio_set_level(ACTUATOR_PIN_DS, 0);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
-    vTaskDelay(1);
+    ets_delay_us(1);
     actuator_update(initial_value);
 }
 
@@ -42,18 +44,18 @@ void actuator_update(unsigned char value)
 
         // Clock pulse
         gpio_set_level(ACTUATOR_PIN_CLOCK, 1);
-        vTaskDelay(1);
+        ets_delay_us(1);
         gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
-        vTaskDelay(1);
+        ets_delay_us(1);
     }
     // latch
     gpio_set_level(ACTUATOR_PIN_STCP, 1);
-    vTaskDelay(1);
+    ets_delay_us(1);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
-    vTaskDelay(1);
-    char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
+    ets_delay_us(1);
     actuator_value = value;
-    ws_sendframe(NULL, &ws_msg, 2, WS_FR_OP_BIN);
+    const char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
+    ws_sendframe(NULL, ws_msg, 2, WS_FR_OP_BIN);
 }
 
 static struct
@@ -72,6 +74,7 @@ static int actuator_cmd(int argc, char **argv)
     }
 
     actuator_update(actuator_args.byte->ival[0] & 0xffu);
+    printf("%0x\n", actuator_value);
     return 0;
 }
 

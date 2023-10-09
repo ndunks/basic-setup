@@ -25,20 +25,6 @@ static int cmd_state(int argc, char **argv)
     return 0;
 }
 
-static void blink_test()
-{
-re:
-    gpio_set_level(GPIO_NUM_12, 1);
-    gpio_set_level(GPIO_NUM_13, 1);
-    gpio_set_level(GPIO_NUM_14, 1);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-    gpio_set_level(GPIO_NUM_12, 0);
-    gpio_set_level(GPIO_NUM_13, 0);
-    gpio_set_level(GPIO_NUM_14, 0);
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-    goto re;
-}
-
 void app_main()
 {
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -62,6 +48,4 @@ void app_main()
         .argtable = NULL};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&state_cmd));
-
-    //xTaskCreate(&blink_test, "blink", 1024, NULL, 2, NULL);
 }

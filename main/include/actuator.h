@@ -1,7 +1,10 @@
 #ifndef APP_ACTUATOR_H
 #define APP_ACTUATOR_H
 
-static uint8_t actuator_value = 0x00;
+/**
+ * Current actuator state
+*/
+extern unsigned char actuator_value;
 
 void actuator_setup(unsigned char initial_value);
 void actuator_update(unsigned char value);

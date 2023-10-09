@@ -13,9 +13,9 @@ const vuetify = createVuetify({
             mdi,
         },
     },
-    // theme: {
-    //     defaultTheme: localStorage.getItem('mode') === 'light' ? 'light' : 'dark'
-    // }
+    theme: {
+        defaultTheme: localStorage.getItem('mode') === 'light' ? 'light' : 'dark'
+    }
 })
 
 createApp(App).use(vuetify)

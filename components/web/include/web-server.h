@@ -21,19 +21,19 @@ typedef struct
 // Generate command: node web.js
 /* GENERATED CODE START */
 static const char web_mime_image_png[] = "image/png";
-static const char web_mime_application_javascript[] = "application/javascript";
 static const char web_mime_text_css[] = "text/css";
+static const char web_mime_application_javascript[] = "application/javascript";
 static const char web_mime_text_html[] = "text/html";
 
 static webfs_t const web_files[] = {
     {.name = "favicon.png", .type = web_mime_image_png, .gzip = false, .offset = 0, .size = 772},
-    {.name = "index-09553b7f.js", .type = web_mime_application_javascript, .gzip = true, .offset = 772, .size = 54175},
-    {.name = "index-cbe7d8f5.css", .type = web_mime_text_css, .gzip = true, .offset = 54947, .size = 32049},
-    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 86996, .size = 677}};
+    {.name = "index-a61743d7.css", .type = web_mime_text_css, .gzip = true, .offset = 772, .size = 37840},
+    {.name = "index-ec2defed.js", .type = web_mime_application_javascript, .gzip = true, .offset = 38612, .size = 74444},
+    {.name = "index.html", .type = web_mime_text_html, .gzip = false, .offset = 113056, .size = 402}};
 
 #define INDEX_HTML_OFS 3
 #define WEB_FILE_NAME_MAX 18
-    // Total size: 87673 bytes
-    // Generated at 10/7/2023, 9:15:01 AM
+    // Total size: 113458 bytes
+    // Generated at 10/9/2023, 11:05:53 PM
 /* GENERATED CODE END */
 #endif

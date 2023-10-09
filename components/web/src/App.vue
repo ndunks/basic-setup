@@ -1,46 +1,69 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
 import { ref } from "vue"
-import { mdiHome, mdiBolt } from '@mdi/js'
-import { Api } from "./api";
-import { reactive } from "vue";
-const counter = ref(null)
+import { mdiHomeLightbulb, mdiWeatherNight, mdiCog } from '@mdi/js'
+import { useApi } from "./api";
+import Actuator from "./views/Actuator.vue";
+import { useTheme } from "vuetify";
+import Login from "./views/Login.vue";
+const api = useApi()
 
+const loginDialog = ref(null)
+const settingDialog = ref(null)
+const theme = useTheme()
 
-const api = new Api('ws://' + (import.meta.env.VITE_API || location.host) + '/ws')
-api.connect()
-const actuator = api.actuator
-
-// onMounted(() => {
-//   setInterval(() => {
-//     counter.value.innerText = Date.now();
-//   }, 1000)
-// })
-
-function onCheck() {
-  fetch(import.meta.env.VITE_API).then(
-    (r) => console.log(r.headers)
-  )
+function toggleTheme() {
+  const v = theme.global.name.value == 'dark' ? 'light' : 'dark'
+  theme.global.name.value = v
+  localStorage.setItem('mode', v)
 }
 
+function clickSettings() {
+  if (!api.isLogin.value) {
+    loginDialog.value = true
+    return
+  } else {
+    loginDialog.value = false
+    settingDialog.value = true
+  }
+}
 
+function checkLogin() {
+
+}
 
 </script>
 
 <template>
   <v-app>
-    <v-container fluid class="fill-height">
-      <v-row justify="center" no-gutters>
-        <v-col xl="3" lg="4" md="5" sm="6" xs="10">
-          <v-form class="text-center">
-            <v-avatar class="mb-4" color="grey-darken-1" size="64"><v-icon :icon="mdiBolt"></v-icon></v-avatar>
-            <h3 class="mb-3 text-grey-darken-1">MaxBlast</h3>
-            <div ref="counter">...</div>
-            <v-btn @click="onCheck" color="success" :icon="mdiHome" />
-            <v-checkbox v-for="(v, i) of actuator" :key="i" v-model="v.value">{{ i + 1 }}</v-checkbox>
-          </v-form>
-        </v-col>
-      </v-row>
-    </v-container>
+    <v-app-bar>
+      <template v-slot:prepend>
+        <v-icon :icon="mdiHomeLightbulb" />
+      </template>
+      <!-- <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon> -->
+
+      <v-app-bar-title>Open Smart Home</v-app-bar-title>
+      <template v-slot:append>
+        <v-btn @click="toggleTheme" :prepend-icon="mdiWeatherNight" :active="theme.global.name.value == 'dark'"
+          selected-class="bg-success">
+          {{ theme.global.name.value }}
+        </v-btn>
+        <v-btn :icon="mdiCog" @click="clickSettings" />
+      </template>
+
+    </v-app-bar>
+    <v-main>
+      <v-container fluid class="fill-height">
+        <v-row justify="center" no-gutters>
+          <v-col xl="4" lg="5" md="6" cols="12">
+            <Actuator />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+
+    <v-dialog v-model="loginDialog" max-width="400">
+      <Login @login-success="clickSettings" />
+    </v-dialog>
   </v-app>
 </template>
+file:///home/rifin/works/maxsol/maxblast-dash/src/views/Dash.vue
