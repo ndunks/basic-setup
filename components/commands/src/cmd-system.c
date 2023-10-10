@@ -11,6 +11,8 @@
 #include "freertos/task.h"
 #include "sdkconfig.h"
 #include "commands.h"
+#include "nvs.h"
+#include "esp_partition.h"
 
 #ifdef CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS
 #define WITH_TASKS_INFO 1
@@ -52,6 +54,51 @@ static int get_info(int argc, char **argv)
            info.features & CHIP_FEATURE_EMB_FLASH ? "/Embedded-Flash:" : "/External-Flash:",
            spi_flash_get_chip_size() / (1024 * 1024), " MB");
     printf("\trevision number:%d\r\n", info.revision);
+
+    esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_DATA,
+                                                     ESP_PARTITION_SUBTYPE_ANY,
+                                                     NULL);
+    printf("\nData Partition Info:\n");
+    /* has to be at least one app partition */
+    if (it == NULL)
+    {
+        printf("\tNo data partition found\n");
+    }
+
+    bool is_data = false;
+    nvs_stats_t stats = {0};
+    esp_err_t err;
+    while (it != NULL)
+    {
+        const esp_partition_t *p = esp_partition_get(it);
+        is_data = strcmp(p->label, NVS_DEFAULT_PART_NAME) == 0;
+
+        printf("%02x %10s%c %p %d KiB\n",
+               p->subtype,
+               p->label,
+               is_data ? '*' : ' ',
+               (void *)p->address,
+               p->size / 1024);
+
+        it = esp_partition_next(it);
+    }
+    printf("\nNVS Entries: ");
+    if ((err = nvs_get_stats(NVS_DEFAULT_PART_NAME, &stats)) == ESP_OK)
+    {
+        printf("used: %d, free: %d, total: %d, namespaces: %d\n",
+               stats.used_entries, stats.free_entries, stats.total_entries, stats.namespace_count);
+
+        nvs_iterator_t it = nvs_entry_find(NVS_DEFAULT_PART_NAME, NULL, NVS_TYPE_ANY);
+        while (it != NULL)
+        {
+            nvs_entry_info_t info;
+            nvs_entry_info(it, &info);
+            it = nvs_entry_next(it);
+            printf("%16s %20s (%0x)\n", info.namespace_name, info.key, info.type);
+        };
+    }
+    else
+        printf("Get stats Failed: %s (%0x)\n", esp_err_to_name(err), err);
 
     return 0;
 }

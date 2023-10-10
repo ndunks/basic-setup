@@ -16,8 +16,9 @@ export default defineConfig({
     viteCompression({
       filter: /\.(js|mjs|json|css|html)$/i,
       deleteOriginFile: true,
+      threshold: 32,
       compressionOptions: {
-        level: 9
+        level: 9,
       }
     })
   ],

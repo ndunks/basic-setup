@@ -26,22 +26,22 @@ vfs \
 wpa_supplicant \
 nvs_flash \
 newlib \
-mbedtls \
-esp-tls \
-http_parser \
 pthread \
 esp_gdbstub \
 console \
-mdns \
+mbedtls \
+esp-tls \
+http_parser \
 
 
 EXCLUDE_COMPONENTS := \
+mdns \
+fatfs \
 coap \
 esp_http_server \
 esp-wolfssl \
 esp_http_client \
 esp_https_ota \
-fatfs \
 freemodbus \
 jsmn \
 json \

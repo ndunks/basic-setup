@@ -30,3 +30,14 @@ PYTHON=python3 make menuconfig
 - Efuse
 - Internal flash chip ID
 - Firmware Info + time stamp ?
+
+# 1 MB OTA
+
+| Name     | Type | SubType | Offset  | Size    | Offset D | Size D |
+| -------- | ---- | ------- | ------- | ------- | -------- | ------ |
+| nvs      | data | nvs     | 0x9000  | 0x4000  | 36 KB    | 16 KB  |
+| otadata  | data | ota     | 0xd000  | 0x2000  | 52 KB    | 8 KB   |
+| phy_init | data | phy     | 0xf000  | 0x1000  | 60 KB    | 4 KB   |
+| ota_0    | 0    | ota_0   | 0x10000 | 0x70000 | 64 KB    | 448 KB |
+| ota_1    | 0    | ota_1   | 0x80000 | 0x70000 | 512 KB   | 448 KB |
+|          |      |         |         |         | TOTAL    | 924 KB |

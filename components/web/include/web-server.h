@@ -26,14 +26,14 @@ static const char web_mime_application_javascript[] = "application/javascript";
 static const char web_mime_text_html[] = "text/html";
 
 static webfs_t const web_files[] = {
-    {.name = "favicon.png", .type = web_mime_image_png, .gzip = false, .offset = 0, .size = 772},
-    {.name = "index-a61743d7.css", .type = web_mime_text_css, .gzip = true, .offset = 772, .size = 37840},
-    {.name = "index-ec2defed.js", .type = web_mime_application_javascript, .gzip = true, .offset = 38612, .size = 74444},
-    {.name = "index.html", .type = web_mime_text_html, .gzip = false, .offset = 113056, .size = 402}};
+    {.name = "favicon.png", .type = web_mime_image_png, .gzip = true, .offset = 0, .size = 795},
+    {.name = "index-a61743d7.css", .type = web_mime_text_css, .gzip = true, .offset = 795, .size = 37840},
+    {.name = "index-ec2defed.js", .type = web_mime_application_javascript, .gzip = true, .offset = 38635, .size = 74444},
+    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 113079, .size = 280}};
 
 #define INDEX_HTML_OFS 3
 #define WEB_FILE_NAME_MAX 18
-    // Total size: 113458 bytes
-    // Generated at 10/9/2023, 11:05:53 PM
+    // Total size: 113359 bytes
+    // Generated at 10/10/2023, 5:11:13 PM
 /* GENERATED CODE END */
 #endif
