@@ -5,6 +5,7 @@
 #include "FreeRTOS.h"
 #include "freertos/task.h"
 #include "main.h"
+#include "config.h"
 #include "web-socket.h"
 
 // GPIO12 -> SHCP (Shift Register Clock Input)
@@ -13,8 +14,6 @@
 #define ACTUATOR_PIN_DS GPIO_NUM_13
 // GPIO14 -> STCP (Storage Register Clock Input)
 #define ACTUATOR_PIN_STCP GPIO_NUM_14
-
-unsigned char actuator_value = 0x00;
 
 void actuator_setup(unsigned char initial_value)
 {
@@ -53,7 +52,8 @@ void actuator_update(unsigned char value)
     ets_delay_us(1);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
     ets_delay_us(1);
-    actuator_value = value;
+    config.switch_values = value;
+    config_save(NULL);
     const char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
     ws_sendframe(NULL, ws_msg, 2, WS_FR_OP_BIN);
 }
@@ -74,7 +74,7 @@ static int actuator_cmd(int argc, char **argv)
     }
 
     actuator_update(actuator_args.byte->ival[0] & 0xffu);
-    printf("%0x\n", actuator_value);
+    printf("%0x\n", config.switch_values);
     return 0;
 }
 

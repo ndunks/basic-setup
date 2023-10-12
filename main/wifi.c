@@ -1,8 +1,8 @@
 #include "state.h"
 #include "wifi.h"
-#include "esp_wifi.h"
 #include "esp_log.h"
 #include "esp_event.h"
+#include "config.h"
 
 /**
  * Wifi logic and functionaly goes here
@@ -23,6 +23,7 @@ static void handle_wifi_event(void *arg, esp_event_base_t event_base,
     {
 
     case WIFI_EVENT_AP_START:
+        ESP_ERROR_CHECK_WITHOUT_ABORT(tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_AP, config.hostname));
         STATE_SET(STATE_AP_STARTED);
         break;
 
@@ -33,9 +34,9 @@ static void handle_wifi_event(void *arg, esp_event_base_t event_base,
     case WIFI_EVENT_STA_START:
         ESP_LOGI(TAG, "STA START");
         esp_wifi_get_auto_connect(&auto_connect);
-
         if (auto_connect)
         {
+            ESP_ERROR_CHECK_WITHOUT_ABORT(tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, config.hostname));
             STATE_CLR(STATE_STA_FAIL);
             STATE_SET(STATE_STA_CONNECTING);
             esp_wifi_connect(); // app_wifi_connect(NULL, NULL);
@@ -128,26 +129,8 @@ static void handle_ip_event(void *arg, esp_event_base_t event_base,
 /* Called on system boot */
 esp_err_t app_wifi_start(void)
 {
-    uint8_t mac[6];
     wifi_mode_t mode;
     esp_err_t err;
-    wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
-
-    if (esp_efuse_mac_get_default(mac) == ESP_OK)
-    {
-        if (esp_base_mac_addr_set(mac) != ESP_OK)
-            ESP_LOGW(TAG, "Fail base mac");
-    }
-    else
-        ESP_LOGW(TAG, "No efuse mac");
-
-    if ((err = esp_mac_init()) != ESP_OK)
-        goto error0;
-
-    tcpip_adapter_init();
-
-    if ((err = esp_wifi_init(&init_config)) != ESP_OK)
-        goto error1;
 
     if ((err = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &handle_wifi_event, NULL)) != ESP_OK)
         goto error2;
@@ -170,9 +153,6 @@ error3:
     esp_event_handler_unregister(IP_EVENT, ESP_EVENT_ANY_ID, &handle_ip_event);
 error2:
     esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &handle_wifi_event);
-error1:
-    esp_wifi_deinit();
-error0:
     ESP_LOGE(TAG, "%x app_wifi_start: %s", err, esp_err_to_name(err));
     STATE_SET(STATE_WIFI_ERROR);
     return err;

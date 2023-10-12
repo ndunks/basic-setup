@@ -3,6 +3,7 @@
 #include "web-socket.h"
 #include "actuator.h"
 #include "main.h"
+#include "config.h"
 
 void ws_onopen(ws_cli_conn_t *client)
 {
@@ -10,7 +11,7 @@ void ws_onopen(ws_cli_conn_t *client)
     cli = ws_getaddress(client);
     printf("Connection opened, addr: %s\n", cli);
 
-    char ws_msg[2] = {WS_MSG_ID_ACTUATOR, actuator_value};
+    char ws_msg[2] = {WS_MSG_ID_ACTUATOR, config.switch_values};
 
     ws_sendframe_bin(client, ws_msg, 2);
 }

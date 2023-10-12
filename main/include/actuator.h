@@ -4,7 +4,7 @@
 /**
  * Current actuator state
 */
-extern unsigned char actuator_value;
+//extern unsigned char actuator_value;
 
 void actuator_setup(unsigned char initial_value);
 void actuator_update(unsigned char value);

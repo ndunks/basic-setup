@@ -94,7 +94,7 @@ static esp_err_t http_handler()
 
     http_header_len = recv(client_fd, http_buf, HTTP_BUF_SIZE, 0);
     http_buf[http_header_len] = 0;
-    //ESP_LOGI(TAG, "%u bytes\n%s", http_header_len, http_buf);
+    // ESP_LOGI(TAG, "%u bytes\n%s", http_header_len, http_buf);
 
     // Minimal expected content is:
     // GET / HTTP/1.1\r\n\r\n (18 byte)
@@ -131,7 +131,7 @@ static esp_err_t http_handler()
     //*endPath = 0;
     int path_len = endPath - path;
 
-    //ESP_LOGI(TAG, "Path (%d) %s", path_len, path);
+    // ESP_LOGI(TAG, "Path (%d) %s", path_len, path);
 
     if (path_len > 1 && path_len <= WEB_FILE_NAME_MAX)
     {
@@ -194,7 +194,7 @@ static void http_thread(void *arg)
 
         ESP_LOGI(TAG, "Client FD %d", client_fd);
 
-        //setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
+        // setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
         setsockopt(client_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv));
         http_handler();
     }
@@ -294,11 +294,4 @@ void web_server_main()
     web_socket_main();
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &http_start, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &http_stop, NULL));
-
-    for (int i = 0; i < ((sizeof web_files) / sizeof(webfs_t)); i++)
-    {
-        const webfs_t *f = &web_files[i];
-
-        ESP_LOGI(TAG, "WebFile %d, %s, %s", i, f->name, f->type);
-    }
 }
