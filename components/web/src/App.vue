@@ -41,7 +41,7 @@ function checkLogin() {
       </template>
       <!-- <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon> -->
 
-      <v-app-bar-title>Open Smart Home</v-app-bar-title>
+      <v-app-bar-title v-text="api.hostname.value"/>
       <template v-slot:append>
         <v-btn @click="toggleTheme" :prepend-icon="mdiWeatherNight" :active="theme.global.name.value == 'dark'"
           selected-class="bg-success">

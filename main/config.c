@@ -61,6 +61,8 @@ void config_reset()
     {
         sprintf(config.sensors[i], "Sensor %d", i + 1);
     }
+
+    // reset wifi mode too ? or separate command
 }
 
 void config_print()
@@ -126,6 +128,23 @@ static void on_ws_client(ws_cli_conn_t *client, const unsigned char *msg, uint64
     memset(ws_msg + 1 + (offsetof(struct app_config, password)), '*', APP_NAME_MAX_SIZE);
     ws_sendframe_bin(client, ws_msg, len);
 }
+static void on_ws_login(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+
+    // Send config struct without password
+    char ws_msg[2] = {WS_MSG_ID_LOGIN, false};
+
+    if ((size - 1) <= APP_NAME_MAX_SIZE)
+    {
+        if (strncmp(config.password, (const char *)(msg + 1), size - 1) == 0)
+        {
+            // password matched
+            ws_msg[1] = true;
+        }
+    }
+
+    ws_sendframe_bin(client, ws_msg, 2);
+}
 
 esp_err_t config_load()
 {
@@ -167,5 +186,6 @@ esp_err_t config_load()
 
     nvs_close(handle);
     web_socket_add_handler(WS_ON_OPEN, &on_ws_client);
+    web_socket_add_handler(WS_MSG_ID_LOGIN, &on_ws_login);
     return err;
 }

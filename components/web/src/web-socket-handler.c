@@ -107,5 +107,5 @@ void ws_onmessage(ws_cli_conn_t *client,
      *
      * Client equals to NULL: broadcast
      */
-    ws_sendframe(NULL, (char *)msg, size, type);
+    //ws_sendframe(NULL, (char *)msg, size, type);
 }

@@ -2,7 +2,7 @@
 #define APP_CONFIG_H
 
 #include "tcpip_adapter.h"
-
+// Only support for 8
 #define APP_SWITCH_COUNT 8
 #define APP_SENSOR_COUNT 0
 #define APP_NAME_MAX_SIZE 28

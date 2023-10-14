@@ -12,6 +12,7 @@ extern "C"
 #define WS_MSG_ID_ACTUATOR 0x01
 #define WS_MSG_ID_CONFIG 0x02
 #define WS_MSG_ID_SENSOR 0x03
+#define WS_MSG_ID_LOGIN 0x04
 
     typedef void (*web_socket_handler)(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type);
     /**

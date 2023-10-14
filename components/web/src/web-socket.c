@@ -63,6 +63,7 @@ struct ws_connection
     pthread_cond_t cnd_state_close;
     pthread_t thrd_tout;
     bool close_thrd;
+    bool is_login;
 
     /* Send lock. */
     pthread_mutex_t mtx_snd;

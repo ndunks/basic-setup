@@ -1,120 +1,31 @@
-import type { ShallowRef } from "vue";
 import type { Ref } from "vue";
 import { shallowRef } from "vue";
 import { ref } from "vue";
-
-export enum ApiStatus {
-    DISCONNECTED, CONNECTED, CONNECTIING
-}
-
-/** #define WS_ON_OPEN 0x00 */
-const WS_ON_OPEN = 0x00
-/** #define WS_MSG_ID_ACTUATOR 0x01 */
-const WS_MSG_ID_ACTUATOR = 0x01
-/** #define WS_MSG_ID_CONFIG 0x02 */
-const WS_MSG_ID_CONFIG = 0x02
-/** #define WS_MSG_ID_SENSOR 0x03 */
-const WS_MSG_ID_SENSOR = 0x03
-
-/**
-struct app_config
-{
-    uint16_t config_version;
-    uint8_t switch_len;
-    uint8_t sensor_len;
-    uint8_t switch_values; // APP_SWITCH_COUNT / 8
-    char hostname[TCPIP_HOSTNAME_MAX_SIZE];
-    char password[APP_NAME_MAX_SIZE];
-    char switches[APP_SWITCH_COUNT][APP_NAME_MAX_SIZE];
-    char sensors[APP_SENSOR_COUNT][APP_NAME_MAX_SIZE];
-};
- */
-interface AppConfig {
-    /** uint16_t */
-    configVersion: number
-    /** uint8_t */
-    switchLen: number
-    /** uint8_t */
-    sensorLen: number
-    /** uint8_t */
-    switchValues: number
-    /** char[32]  */
-    hostname: string
-    /** char[28] */
-    password: string
-    /** char[][28] Switch name */
-    switches: string[]
-    /** char[][28] Sensor name */
-    sensors: string[]
-}
-
-function parseAppConfigStruct(b: Uint8Array): AppConfig {
-    const hostnameMaxLen = 32, strMaxLen = 28;
-
-    let configVersion: number,
-        switchLen: number,
-        sensorLen: number,
-        switchValues: number,
-        hostname: string,
-        password: string,
-        switches: string[],
-        sensors: string[];
-        let ofs = 0;
-
-        function readStr(maxLen: number){
-            const str = [...b.slice(ofs, ofs + maxLen)]
-            .filter( v => !!v).map( v => String.fromCharCode(v)).join('')
-            ofs += maxLen
-            return str
-        }
-
-
-        // From Bigendian, readUint16
-        configVersion = (((b[ofs]) & 0xff) >>> 0) | ((b[ofs+1] << 8) & 0xff) >>> 0;
-        ofs += 2
-        switchLen = b[ofs++];
-        sensorLen = b[ofs++];
-        switchValues = b[ofs++];
-        // if( configVersion != 1 ){
-        //     console.warn('Unsupported config version', configVersion)
-        //     return null;
-        // }
-        hostname = readStr(hostnameMaxLen)
-        password = readStr(strMaxLen)
-        switches = [...new Array(switchLen)].map( (_, i) => {
-            return readStr(strMaxLen)
-        })
-        sensors = [...new Array(sensorLen)].map( (_, i) => {
-            return readStr(strMaxLen)
-        })
-
-    const cfg: AppConfig = {
-        configVersion,
-        switchLen,
-        sensorLen,
-        switchValues,
-        hostname,
-        password,
-        switches,
-        sensors,
-    }
-    console.debug(cfg)
-    return cfg
-}
+import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN } from "./types";
+import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
 
 class Api {
-    private ws: WebSocket
     public status: Ref<ApiStatus> = ref(ApiStatus.DISCONNECTED)
     //public actuator: Array<Ref<boolean>> = [...new Array(8)].map( () => ref(null))
-    public actuator: ShallowRef<Array<boolean>> = shallowRef([])
-    public sensors: Array<Ref<number>> = []
-    public actuatorPendingUpdate = ref(true)
+    public actuatorPendingUpdate = ref(0)
+    public isConnected = ref(false)
     public isLogin = ref(false)
-    public appConfig = shallowRef<AppConfig | null>(null)
 
     // Actuator option: 1,2,3,4,5,6,7,8
-    public actuatorOptions = [...new Array(8)].map((_, i) => (i + 1).toString())
+    public actuatorNames = shallowRef([] as string[]);
+    public actuatorActives = shallowRef([] as number[])
+    // public sensorNames = shallowRef([] as string[]);
+    // public sensorValues = shallowRef([] as number[]);
+    public hostname = shallowRef("...");
+
+    private ws: WebSocket
+    //private appConfig = shallowRef<AppConfig | null>(null)
     private autoReconnect = true
+    /** Delay second before trying to reconnect */
+    private autoReconnectBackoff = 2
+    private waitingReplyTimeout = 5
+
+    private waitingReplyStack: { code: number, callback: (msg: Uint8Array) => void }[] = []
 
     constructor(private serverURL: string) {
         this.connect()
@@ -140,65 +51,127 @@ class Api {
         this.ws.close()
     }
 
-    updateActuator = (values: string[]) => {
-        let value: boolean
-        let actuatorName: string
-        let byte = 0
-        // push to websocket, map back as byte
-        for (let i = 0; i < 8; i++) {
-            actuatorName = (i + 1).toString()
-            value = values.includes(actuatorName)
-            if (value) {
-                byte |= 1 << i
-            }
-        }
+    // Index of active switch
+    updateActuator = (values: number[]) => {
+        const byte = bitsArraytoByte(values)
+        this.actuatorPendingUpdate.value = byte ^ bitsArraytoByte(this.actuatorActives.value)
 
-        this.actuatorPendingUpdate.value = true
         const uint8Array = new Uint8Array([0x01, byte])
         console.debug('REQ ACTUATOR UPDATE', values)
         this.ws.send(uint8Array);
     }
 
-    private wsActuatorUpdate(byte: number) {
-        let value: boolean
-        const actuator = []
-        for (let i = 0; i < 8; i++) {
-            value = !!(byte & 1 << i)
-            if (value) {
-                actuator.push((i + 1).toString())
+    login(password: string): Promise<boolean> {
+        if (password.length > APP_NAME_MAX_SIZE)
+            return Promise.reject(Error("Password too long"))
+        return this.request(WS_MSG_ID_LOGIN, password).then(
+            res => this.isLogin.value = res[0] === 1
+        )
+    }
+
+    /** Syncronus request-response */
+    request(code: number, payload: string) {
+        return new Promise<Uint8Array>((resolve, reject) => {
+            let timeoutTimer
+            const waiter = {
+                code,
+                callback(msg: Uint8Array) {
+                    clearTimeout(timeoutTimer)
+                    removeWaiter()
+                    resolve(msg)
+                    // if( msg )
+                    //     resolve([...msg].map(v => String.fromCharCode(v)).join(''))
+                    // else resolve("")
+                }
             }
+
+            this.waitingReplyStack.push(waiter)
+            const removeWaiter = () => {
+                const i = this.waitingReplyStack.indexOf(waiter)
+                // warn: race when modify array but already modified by other
+                if (i >= 0)
+                    this.waitingReplyStack.splice(i, 1)
+            }
+
+
+            timeoutTimer = setTimeout(() => {
+                removeWaiter()
+                reject(new Error('Timeout'))
+            }, this.waitingReplyTimeout * 1000)
+
+            const v = new Uint8Array(payload.length + 1);
+            v[0] = code
+            v.set(payload.split('').map((v) => v.charCodeAt(0)), 1)
+
+            try {
+                this.ws.send(v)
+            } catch (error) {
+                clearTimeout(timeoutTimer)
+                removeWaiter()
+                reject(error)
+            }
+        })
+    }
+
+    private updateAppConfig(rawConfig: Uint8Array) {
+        const config = parseAppConfigStruct(rawConfig);
+        if (this.status.value == ApiStatus.CONNECTIING) {
+            // First time get config
+            this.status.value = ApiStatus.CONNECTED
         }
-        this.actuator.value = actuator
-        this.actuatorPendingUpdate.value = false
-        console.debug('WS ACTUATOR UPDATE', actuator)
+        this.hostname.value = config.hostname
+        this.actuatorNames.value = config.switches
+        this.actuatorActives.value = bitsOnToArray(config.switchValues)
+
+        this.isConnected.value = true
+        this.autoReconnectBackoff = 2
+    }
+
+    private wsActuatorUpdate(byte: number) {
+        this.actuatorActives.value = bitsOnToArray(byte)
+        this.actuatorPendingUpdate.value = 0
+        console.debug('WS ACTUATOR UPDATE', this.actuatorActives.value)
     }
 
     private onGotBinaryMessage(msg: Uint8Array) {
-        // Actuator update
-        switch (msg[0]) {
+        const code = msg[0]
+        // Any waiters ?
+        this.waitingReplyStack.filter(v => v.code === code).forEach(
+            v => v.callback.call(this, msg.slice(1))
+        )
+
+        switch (code) {
             case WS_MSG_ID_ACTUATOR:
                 return this.wsActuatorUpdate(msg[1])
             case WS_MSG_ID_CONFIG:
-                this.appConfig.value = parseAppConfigStruct(msg.slice(1));
-                break
+                return this.updateAppConfig(msg.slice(1))
         }
     }
 
     private wsOnOpen = () => {
         console.log("WS: Open");
-        this.status.value = ApiStatus.CONNECTED
+        // if (this.appConfig.value != null) {
+        //     this.status.value = ApiStatus.CONNECTED
+        // }// else: still waiting configration from device
     }
 
     private wsOnClose = () => {
         console.log("WS: Close");
+        this.isConnected.value = false
+        this.isLogin.value = false
+
         this.ws.removeEventListener('open', this.wsOnOpen);
         this.ws.removeEventListener('close', this.wsOnClose);
         this.ws.removeEventListener('message', this.wsOnMessage);
         this.ws = null
+
         if (this.autoReconnect) {
             setTimeout(() => {
+                if (this.autoReconnectBackoff < 10)
+                    this.autoReconnectBackoff++
+
                 this.connect()
-            }, 7000)
+            }, this.autoReconnectBackoff * 1000)
         }
     }
 
