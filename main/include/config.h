@@ -4,7 +4,7 @@
 #include "tcpip_adapter.h"
 
 #define APP_SWITCH_COUNT 8
-#define APP_SENSOR_COUNT 8
+#define APP_SENSOR_COUNT 0
 #define APP_NAME_MAX_SIZE 28
 extern const char *APP_NVS_NAMESPACE;
 struct app_config

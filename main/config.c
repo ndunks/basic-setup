@@ -6,6 +6,7 @@
 #include "esp8266/rom_functions.h"
 #include "config.h"
 #include "tcpip_adapter.h"
+#include "web-socket-handler.h"
 
 #define TAG "config"
 static const uint16_t APP_CONFIG_VERSION = 1u;
@@ -58,7 +59,7 @@ void config_reset()
     }
     for (i = 0; i < APP_SENSOR_COUNT; i++)
     {
-        sprintf(config.switches[i], "Sensor %d", i + 1);
+        sprintf(config.sensors[i], "Sensor %d", i + 1);
     }
 }
 
@@ -113,6 +114,19 @@ esp_err_t config_save(void *handle)
     return err;
 }
 
+static void on_ws_client(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+
+    // Send config struct without password
+    size_t len = sizeof(struct app_config) + 1;
+    char *ws_msg = malloc(len);
+    ws_msg[0] = WS_MSG_ID_CONFIG;
+    memcpy(ws_msg + 1, &config, len - 1);
+    // Nulled password
+    memset(ws_msg + 1 + (offsetof(struct app_config, password)), '*', APP_NAME_MAX_SIZE);
+    ws_sendframe_bin(client, ws_msg, len);
+}
+
 esp_err_t config_load()
 {
     // if no config, set the default
@@ -152,5 +166,6 @@ esp_err_t config_load()
     config_print();
 
     nvs_close(handle);
+    web_socket_add_handler(WS_ON_OPEN, &on_ws_client);
     return err;
 }

@@ -1,19 +1,58 @@
 #include "stdio.h"
 #include "stdlib.h"
-#include "web-socket.h"
-#include "actuator.h"
 #include "main.h"
 #include "config.h"
+#include "web-socket-handler.h"
+
+typedef struct ws_item
+{
+    unsigned char code;
+    web_socket_handler handler;
+    SLIST_ENTRY(ws_item)
+    next;
+} ws_item_t;
+
+static SLIST_HEAD(ws_handler_, ws_item) ws_handler;
+
+int web_socket_add_handler(unsigned char code, web_socket_handler handler)
+{
+    ws_item_t *new = calloc(1, sizeof(ws_item_t));
+    if (new == NULL)
+    {
+        printf("web_socket_add_handler: No mem\n");
+        return -1;
+    }
+    new->code = code;
+    new->handler = handler;
+
+    ws_item_t *end = SLIST_FIRST(&ws_handler);
+    if (end == NULL)
+    {
+        SLIST_INSERT_HEAD(&ws_handler, new, next);
+    }
+    else
+    {
+        ws_item_t *cur;
+        while ((cur = SLIST_NEXT(end, next)) != NULL)
+            end = cur;
+
+        SLIST_INSERT_AFTER(end, new, next);
+    }
+    return 0;
+}
 
 void ws_onopen(ws_cli_conn_t *client)
 {
+    ws_item_t *cur;
     char *cli;
     cli = ws_getaddress(client);
     printf("Connection opened, addr: %s\n", cli);
 
-    char ws_msg[2] = {WS_MSG_ID_ACTUATOR, config.switch_values};
-
-    ws_sendframe_bin(client, ws_msg, 2);
+    SLIST_FOREACH(cur, &ws_handler, next)
+    {
+        if (cur->code == 0)
+            cur->handler(client, NULL, 0, 0);
+    }
 }
 
 /**
@@ -47,21 +86,16 @@ void ws_onclose(ws_cli_conn_t *client)
 void ws_onmessage(ws_cli_conn_t *client,
                   const unsigned char *msg, uint64_t size, int type)
 {
+    ws_item_t *cur;
     char *cli = ws_getaddress(client);
     printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
-    if (size == 2)
-    {
-        switch (msg[0])
-        {
-        case WS_MSG_ID_ACTUATOR:
-            // Update actuator value
-            actuator_update(msg[1]);
-            /* code */
-            break;
+    if (size < 1)
+        return; // too short
 
-        default:
-            break;
-        }
+    SLIST_FOREACH(cur, &ws_handler, next)
+    {
+        if (cur->code == msg[0])
+            cur->handler(client, msg, size, type);
     }
     /**
      * Mimicks the same frame type received and re-send it again

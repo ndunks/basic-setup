@@ -7,6 +7,101 @@ export enum ApiStatus {
     DISCONNECTED, CONNECTED, CONNECTIING
 }
 
+/** #define WS_ON_OPEN 0x00 */
+const WS_ON_OPEN = 0x00
+/** #define WS_MSG_ID_ACTUATOR 0x01 */
+const WS_MSG_ID_ACTUATOR = 0x01
+/** #define WS_MSG_ID_CONFIG 0x02 */
+const WS_MSG_ID_CONFIG = 0x02
+/** #define WS_MSG_ID_SENSOR 0x03 */
+const WS_MSG_ID_SENSOR = 0x03
+
+/**
+struct app_config
+{
+    uint16_t config_version;
+    uint8_t switch_len;
+    uint8_t sensor_len;
+    uint8_t switch_values; // APP_SWITCH_COUNT / 8
+    char hostname[TCPIP_HOSTNAME_MAX_SIZE];
+    char password[APP_NAME_MAX_SIZE];
+    char switches[APP_SWITCH_COUNT][APP_NAME_MAX_SIZE];
+    char sensors[APP_SENSOR_COUNT][APP_NAME_MAX_SIZE];
+};
+ */
+interface AppConfig {
+    /** uint16_t */
+    configVersion: number
+    /** uint8_t */
+    switchLen: number
+    /** uint8_t */
+    sensorLen: number
+    /** uint8_t */
+    switchValues: number
+    /** char[32]  */
+    hostname: string
+    /** char[28] */
+    password: string
+    /** char[][28] Switch name */
+    switches: string[]
+    /** char[][28] Sensor name */
+    sensors: string[]
+}
+
+function parseAppConfigStruct(b: Uint8Array): AppConfig {
+    const hostnameMaxLen = 32, strMaxLen = 28;
+
+    let configVersion: number,
+        switchLen: number,
+        sensorLen: number,
+        switchValues: number,
+        hostname: string,
+        password: string,
+        switches: string[],
+        sensors: string[];
+        let ofs = 0;
+
+        function readStr(maxLen: number){
+            const str = [...b.slice(ofs, ofs + maxLen)]
+            .filter( v => !!v).map( v => String.fromCharCode(v)).join('')
+            ofs += maxLen
+            return str
+        }
+
+
+        // From Bigendian, readUint16
+        configVersion = (((b[ofs]) & 0xff) >>> 0) | ((b[ofs+1] << 8) & 0xff) >>> 0;
+        ofs += 2
+        switchLen = b[ofs++];
+        sensorLen = b[ofs++];
+        switchValues = b[ofs++];
+        // if( configVersion != 1 ){
+        //     console.warn('Unsupported config version', configVersion)
+        //     return null;
+        // }
+        hostname = readStr(hostnameMaxLen)
+        password = readStr(strMaxLen)
+        switches = [...new Array(switchLen)].map( (_, i) => {
+            return readStr(strMaxLen)
+        })
+        sensors = [...new Array(sensorLen)].map( (_, i) => {
+            return readStr(strMaxLen)
+        })
+
+    const cfg: AppConfig = {
+        configVersion,
+        switchLen,
+        sensorLen,
+        switchValues,
+        hostname,
+        password,
+        switches,
+        sensors,
+    }
+    console.debug(cfg)
+    return cfg
+}
+
 class Api {
     private ws: WebSocket
     public status: Ref<ApiStatus> = ref(ApiStatus.DISCONNECTED)
@@ -15,6 +110,7 @@ class Api {
     public sensors: Array<Ref<number>> = []
     public actuatorPendingUpdate = ref(true)
     public isLogin = ref(false)
+    public appConfig = shallowRef<AppConfig | null>(null)
 
     // Actuator option: 1,2,3,4,5,6,7,8
     public actuatorOptions = [...new Array(8)].map((_, i) => (i + 1).toString())
@@ -79,8 +175,12 @@ class Api {
 
     private onGotBinaryMessage(msg: Uint8Array) {
         // Actuator update
-        if (msg[0] == 0x01) {
-            this.wsActuatorUpdate(msg[1])
+        switch (msg[0]) {
+            case WS_MSG_ID_ACTUATOR:
+                return this.wsActuatorUpdate(msg[1])
+            case WS_MSG_ID_CONFIG:
+                this.appConfig.value = parseAppConfigStruct(msg.slice(1));
+                break
         }
     }
 

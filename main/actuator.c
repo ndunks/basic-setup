@@ -6,7 +6,7 @@
 #include "freertos/task.h"
 #include "main.h"
 #include "config.h"
-#include "web-socket.h"
+#include "web-socket-handler.h"
 
 // GPIO12 -> SHCP (Shift Register Clock Input)
 #define ACTUATOR_PIN_CLOCK GPIO_NUM_12
@@ -14,6 +14,17 @@
 #define ACTUATOR_PIN_DS GPIO_NUM_13
 // GPIO14 -> STCP (Storage Register Clock Input)
 #define ACTUATOR_PIN_STCP GPIO_NUM_14
+
+// static void on_ws_client(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+// {
+//     char ws_msg[2] = {WS_MSG_ID_ACTUATOR, config.switch_values};
+//     ws_sendframe_bin(client, ws_msg, 2);
+// }
+
+static void on_ws_update(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    actuator_update(msg[1]);
+}
 
 void actuator_setup(unsigned char initial_value)
 {
@@ -31,6 +42,9 @@ void actuator_setup(unsigned char initial_value)
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
     ets_delay_us(1);
     actuator_update(initial_value);
+
+    // web_socket_add_handler(0, &on_ws_client);
+    web_socket_add_handler(WS_MSG_ID_ACTUATOR, &on_ws_update);
 }
 
 void actuator_update(unsigned char value)
@@ -54,6 +68,8 @@ void actuator_update(unsigned char value)
     ets_delay_us(1);
     config.switch_values = value;
     config_save(NULL);
+
+    // Broadcast to other client
     const char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
     ws_sendframe(NULL, ws_msg, 2, WS_FR_OP_BIN);
 }
