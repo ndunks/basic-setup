@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "stdlib.h"
+#include "string.h"
 #include "main.h"
 #include "config.h"
 #include "web-socket-handler.h"
@@ -91,11 +92,21 @@ void ws_onmessage(ws_cli_conn_t *client,
     printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
     if (size < 1)
         return; // too short
+    int handledCount = 0;
 
     SLIST_FOREACH(cur, &ws_handler, next)
     {
         if (cur->code == msg[0])
+        {
             cur->handler(client, msg, size, type);
+            handledCount++;
+        }
+    }
+    if (handledCount == 0)
+    {
+        char *invalid = "\x00Invalid command";
+        invalid[0] = WS_MSG_ID_MESSAGE;
+        ws_sendframe_bin(client, invalid, strlen(invalid));
     }
     /**
      * Mimicks the same frame type received and re-send it again
@@ -107,5 +118,5 @@ void ws_onmessage(ws_cli_conn_t *client,
      *
      * Client equals to NULL: broadcast
      */
-    //ws_sendframe(NULL, (char *)msg, size, type);
+    // ws_sendframe(NULL, (char *)msg, size, type);
 }

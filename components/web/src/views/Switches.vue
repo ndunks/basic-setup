@@ -7,8 +7,8 @@ const api = useApi()
 
 <template>
     <v-card class="mx-auto" max-width="300" title="Switches">
-        <v-item-group multiple v-if="api.isConnected " :model-value="api.actuatorActives.value" @update:model-value="api.updateActuator">
-            <v-item v-for="(v,i) of api.actuatorNames.value" :key="i" :value="i" v-slot="{ isSelected, toggle }">
+        <v-item-group multiple v-if="api.isConnected " :model-value="api.switchActives.value" @update:model-value="api.updateActuator">
+            <v-item v-for="(v,i) of api.switchNames.value" :key="i" :value="i" v-slot="{ isSelected, toggle }">
                 <v-list-item @click="toggle" :active="isSelected" color="success">
                     <template #prepend="{ isActive }">
                         <v-switch color="success" class="me-4" :model-value="isActive" hide-details

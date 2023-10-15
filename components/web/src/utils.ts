@@ -1,7 +1,7 @@
 import { TCPIP_HOSTNAME_MAX_SIZE, type AppConfig, APP_NAME_MAX_SIZE } from "./types";
 
 export function parseAppConfigStruct(b: Uint8Array): AppConfig {
-   
+
 
     let configVersion: number,
         switchLen: number,
@@ -14,8 +14,10 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
     let ofs = 0;
 
     function readStr(maxLen: number) {
+        let nullTerminated = false
         const str = [...b.slice(ofs, ofs + maxLen)]
-            .filter(v => !!v).map(v => String.fromCharCode(v)).join('')
+            .filter(v => nullTerminated ? false : nullTerminated = !!v)
+            .map(v => String.fromCharCode(v)).join('')
         ofs += maxLen
         return str
     }

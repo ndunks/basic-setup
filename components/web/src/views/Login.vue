@@ -1,46 +1,42 @@
 <script setup lang="ts">
 import { useApi } from '@/api';
-import { mdiLock } from '@mdi/js';
+import { mdiEye, mdiEyeOff, mdiLock } from '@mdi/js';
+import { shallowRef } from 'vue';
 import { onMounted } from 'vue';
 import { ref } from 'vue';
 
 const api = useApi()
 
-const emits = defineEmits<{ (event: 'loginSuccess') }>()
+const emits = defineEmits<{ (event: 'close') }>()
 let password = ref('')
+let error = shallowRef([])
+
 const loading = ref(false)
+const passwordVisible = ref(false)
 function submit() {
     loading.value = true
+    error.value = []
     api.login(password.value).then(
-        success => {
-            if (success) {
-                return emits('loginSuccess')
-            } else
-                alert("Invalid password")
-        }
-    ).catch(e => alert(e.message || e))
+        () => emits('close')
+    ).catch(e => error.value = [e.message || e])
         .finally(() => loading.value = false)
 }
-
-onMounted(() => {
-    if (api.isLogin) {
-        return emits('loginSuccess')
-    }
-})
 
 </script>
 
 <template>
-    <v-form>
-        <v-card title="Login">
+    <v-form @submit.prevent="submit">
+        <v-card title="Login" :prepend-icon="mdiLock">
             <v-card-text class="mt-3">
-                <v-text-field density="compact" :rounded="0" autocomplete="off" v-model="password" :prepend-icon="mdiLock"
-                    label="Password" type="password" @keydown.enter="submit"></v-text-field>
+                <v-text-field counter :append-icon="passwordVisible ? mdiEye : mdiEyeOff" Xdensity="compact"
+                    autocomplete="off" v-model="password" label="Password" :error-messages="error"
+                    :type="passwordVisible ? 'text' : 'password'"
+                    @click:append="passwordVisible = !passwordVisible"></v-text-field>
             </v-card-text>
             <v-divider></v-divider>
             <v-card-actions class="text-center">
                 <v-spacer />
-                <v-btn :loading="loading" @click="submit" color="success">
+                <v-btn :loading="loading" type="submit" color="success">
                     Login
                 </v-btn>
             </v-card-actions>

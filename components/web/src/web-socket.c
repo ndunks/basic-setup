@@ -38,7 +38,6 @@
 
 #include "esp_log.h"
 #include "esp_err.h"
-#include "lwip/inet.h"
 #include "lwip/sockets.h"
 #include "web-socket.h"
 
@@ -50,34 +49,6 @@
  * @brief wsServer main routines.
  */
 
-/**
- * @brief Client socks.
- */
-struct ws_connection
-{
-    int client_sock; /**< Client socket FD.        */
-    int state;       /**< WebSocket current state. */
-
-    /* Timeout thread and locks. */
-    pthread_mutex_t mtx_state;
-    pthread_cond_t cnd_state_close;
-    pthread_t thrd_tout;
-    bool close_thrd;
-    bool is_login;
-
-    /* Send lock. */
-    pthread_mutex_t mtx_snd;
-#ifdef CONFIG_LWIP_IPV6
-    /* IP address. */
-    char ip[INET6_ADDRSTRLEN];
-#else
-    char ip[INET_ADDRSTRLEN];
-#endif
-    /* Ping/Pong IDs and locks. */
-    int32_t last_pong_id;
-    int32_t current_ping_id;
-    pthread_mutex_t mtx_ping;
-};
 
 /**
  * @brief Clients list.
@@ -1434,6 +1405,7 @@ static void *ws_establishconnection(ws_cli_conn_t *client)
     /* Prepare frame data. */
     memset(&wfd, 0, sizeof(wfd));
     wfd.client = client;
+    client->is_login = false;
 
     /* Do handshake. */
     // if (do_handshake(&wfd) < 0)

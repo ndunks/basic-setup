@@ -127,23 +127,56 @@ static void on_ws_client(ws_cli_conn_t *client, const unsigned char *msg, uint64
     // Nulled password
     memset(ws_msg + 1 + (offsetof(struct app_config, password)), '*', APP_NAME_MAX_SIZE);
     ws_sendframe_bin(client, ws_msg, len);
+    free(ws_msg);
 }
 static void on_ws_login(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
 
     // Send config struct without password
-    char ws_msg[2] = {WS_MSG_ID_LOGIN, false};
+    char ws_msg[2] = {WS_MSG_ID_LOGIN, client->is_login};
 
-    if ((size - 1) <= APP_NAME_MAX_SIZE)
+    if (!client->is_login)
     {
-        if (strncmp(config.password, (const char *)(msg + 1), size - 1) == 0)
+        if ((size - 1) > 0 && (size - 1) <= APP_NAME_MAX_SIZE)
         {
-            // password matched
-            ws_msg[1] = true;
+            if (strncmp(config.password, (const char *)(msg + 1), size - 1) == 0)
+            {
+                // password matched
+                ws_msg[1] = true;
+                client->is_login = true;
+            }
         }
     }
 
     ws_sendframe_bin(client, ws_msg, 2);
+}
+
+static void on_ws_update_hostname(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+
+    char ws_msg[2] = {WS_MSG_ID_UPDATE_HOSTNAME, false};
+    if ((size - 1) > 0 && (size - 1) <= TCPIP_HOSTNAME_MAX_SIZE)
+    {
+        memcpy(config.hostname, msg + 1, size - 1);
+        if (size - 1 < TCPIP_HOSTNAME_MAX_SIZE)
+            config.hostname[size - 1] = 0x00; // terminate with null
+
+        if (config_save(NULL) == ESP_OK)
+        {
+            ws_msg[1] = true;
+        }
+    }
+    // Send reply to specific client
+    ws_sendframe_bin(client, ws_msg, 2);
+
+    // Broadcast update config
+    if (ws_msg[1] == true)
+        on_ws_client(NULL, NULL, 0, WS_FR_OP_BIN);
+}
+
+static void on_ws_logout(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    client->is_login = false;
 }
 
 esp_err_t config_load()
@@ -187,5 +220,7 @@ esp_err_t config_load()
     nvs_close(handle);
     web_socket_add_handler(WS_ON_OPEN, &on_ws_client);
     web_socket_add_handler(WS_MSG_ID_LOGIN, &on_ws_login);
+    web_socket_add_handler(WS_MSG_ID_LOGOUT, &on_ws_logout);
+    web_socket_add_handler(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname);
     return err;
 }

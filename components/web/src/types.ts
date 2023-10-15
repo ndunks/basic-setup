@@ -12,6 +12,10 @@ export const WS_MSG_ID_CONFIG = 0x02
 /** #define WS_MSG_ID_SENSOR 0x03 */
 export const WS_MSG_ID_SENSOR = 0x03
 export const WS_MSG_ID_LOGIN = 0x04
+export const WS_MSG_ID_LOGOUT = 0x05
+export const WS_MSG_ID_MESSAGE = 0x06
+export const WS_MSG_ID_UPDATE_HOSTNAME = 0x07
+export const WS_MSG_ID_UPDATE_SWITCHES = 0x08
 export const TCPIP_HOSTNAME_MAX_SIZE = 32
 export const APP_NAME_MAX_SIZE = 28;
 /**

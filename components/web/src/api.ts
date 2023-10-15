@@ -1,7 +1,7 @@
 import type { Ref } from "vue";
 import { shallowRef } from "vue";
 import { ref } from "vue";
-import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN } from "./types";
+import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN, WS_MSG_ID_LOGOUT } from "./types";
 import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
 
 class Api {
@@ -12,8 +12,8 @@ class Api {
     public isLogin = ref(false)
 
     // Actuator option: 1,2,3,4,5,6,7,8
-    public actuatorNames = shallowRef([] as string[]);
-    public actuatorActives = shallowRef([] as number[])
+    public switchNames = shallowRef([] as string[]);
+    public switchActives = shallowRef([] as number[])
     // public sensorNames = shallowRef([] as string[]);
     // public sensorValues = shallowRef([] as number[]);
     public hostname = shallowRef("...");
@@ -54,7 +54,7 @@ class Api {
     // Index of active switch
     updateActuator = (values: number[]) => {
         const byte = bitsArraytoByte(values)
-        this.actuatorPendingUpdate.value = byte ^ bitsArraytoByte(this.actuatorActives.value)
+        this.actuatorPendingUpdate.value = byte ^ bitsArraytoByte(this.switchActives.value)
 
         const uint8Array = new Uint8Array([0x01, byte])
         console.debug('REQ ACTUATOR UPDATE', values)
@@ -64,8 +64,35 @@ class Api {
     login(password: string): Promise<boolean> {
         if (password.length > APP_NAME_MAX_SIZE)
             return Promise.reject(Error("Password too long"))
-        return this.request(WS_MSG_ID_LOGIN, password).then(
-            res => this.isLogin.value = res[0] === 1
+        return this.requestTruthy(WS_MSG_ID_LOGIN, password, "Invalid password").then(
+            res => {
+                return this.isLogin.value = res
+            }
+        )
+    }
+
+    logout() {
+        return this.send(WS_MSG_ID_LOGOUT)
+    }
+
+    send(code: number, payload?: string) {
+        const len = payload ? payload.length : 0
+        const v = new Uint8Array(len + 1);
+        v[0] = code
+        if (len > 0)
+            v.set(payload.split('').map((v) => v.charCodeAt(0)), 1)
+        this.ws.send(v)
+        //this.isLogin.value = false
+    }
+    // Throw error on false
+    requestTruthy(code: number, payload: string, errMsg = "Failed") {
+        return this.request(code, payload).then(
+            res => {
+                if (res[0] === 1) {
+                    return true
+                }
+                return Promise.reject(new Error(errMsg))
+            }
         )
     }
 
@@ -98,13 +125,8 @@ class Api {
                 removeWaiter()
                 reject(new Error('Timeout'))
             }, this.waitingReplyTimeout * 1000)
-
-            const v = new Uint8Array(payload.length + 1);
-            v[0] = code
-            v.set(payload.split('').map((v) => v.charCodeAt(0)), 1)
-
             try {
-                this.ws.send(v)
+                this.send(code, payload)
             } catch (error) {
                 clearTimeout(timeoutTimer)
                 removeWaiter()
@@ -120,17 +142,17 @@ class Api {
             this.status.value = ApiStatus.CONNECTED
         }
         this.hostname.value = config.hostname
-        this.actuatorNames.value = config.switches
-        this.actuatorActives.value = bitsOnToArray(config.switchValues)
+        this.switchNames.value = config.switches
+        this.switchActives.value = bitsOnToArray(config.switchValues)
 
         this.isConnected.value = true
         this.autoReconnectBackoff = 2
     }
 
     private wsActuatorUpdate(byte: number) {
-        this.actuatorActives.value = bitsOnToArray(byte)
+        this.switchActives.value = bitsOnToArray(byte)
         this.actuatorPendingUpdate.value = 0
-        console.debug('WS ACTUATOR UPDATE', this.actuatorActives.value)
+        console.debug('WS ACTUATOR UPDATE', this.switchActives.value)
     }
 
     private onGotBinaryMessage(msg: Uint8Array) {

@@ -33,6 +33,7 @@ extern "C"
 #include <stdbool.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include "lwip/inet.h"
 // Todo change it using CONFIG_APP_WS_VERBOSE
 #define VERBOSE_MODE
 #define WS_ERR_TOO_MANY_CLIENT -9
@@ -227,8 +228,35 @@ extern "C"
 #endif
 
     /* Opaque client connection type. */
-    typedef struct ws_connection ws_cli_conn_t;
+    // typedef struct ws_connection ws_cli_conn_t;
+    /**
+     * @brief Client socks.
+     */
+    typedef struct ws_connection
+    {
+        int client_sock; /**< Client socket FD.        */
+        int state;       /**< WebSocket current state. */
 
+        /* Timeout thread and locks. */
+        pthread_mutex_t mtx_state;
+        pthread_cond_t cnd_state_close;
+        pthread_t thrd_tout;
+        bool close_thrd;
+        bool is_login;
+
+        /* Send lock. */
+        pthread_mutex_t mtx_snd;
+    #ifdef CONFIG_LWIP_IPV6
+        /* IP address. */
+        char ip[INET6_ADDRSTRLEN];
+    #else
+        char ip[INET_ADDRSTRLEN];
+    #endif
+        /* Ping/Pong IDs and locks. */
+        int32_t last_pong_id;
+        int32_t current_ping_id;
+        pthread_mutex_t mtx_ping;
+    } ws_cli_conn_t;
     /**
      * @brief events Web Socket events types.
      */
