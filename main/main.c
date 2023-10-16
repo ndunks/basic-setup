@@ -12,6 +12,7 @@
 #include "web-server.h"
 #include "driver/gpio.h"
 #include "web-socket-handler.h"
+#define TAG "main"
 
 static int cmd_dump(int argc, char **argv)
 {
@@ -50,12 +51,20 @@ static int cmd_dump(int argc, char **argv)
 void app_main()
 {
 
+    uint8_t mac[6];
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     APP_STATE = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_mac_init());
+    if (esp_efuse_mac_get_default(mac) == ESP_OK)
+    {
+        if (esp_base_mac_addr_set(mac) != ESP_OK)
+            ESP_LOGW(TAG, "Fail set mac");
+    }
+    else
+        ESP_LOGW(TAG, "Fail get efuse mac");
 
     tcpip_adapter_init();
 

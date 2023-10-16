@@ -33,12 +33,7 @@ void config_reset()
     // 3 hex last efuse + null
     // char *efuse_id[7] = {0};
 
-    if (esp_efuse_mac_get_default(mac) == ESP_OK)
-    {
-        if (esp_base_mac_addr_set(mac) != ESP_OK)
-            ESP_LOGW(TAG, "Fail set mac");
-    }
-    else
+    if (esp_efuse_mac_get_default(mac) != ESP_OK)
         ESP_LOGW(TAG, "Fail get efuse mac");
     // mac: 42F5 200AAF7B
     // cid:      005E6014
@@ -157,6 +152,7 @@ static void on_ws_update_hostname(ws_cli_conn_t *client, const unsigned char *ms
     char ws_msg[2] = {WS_MSG_ID_UPDATE_HOSTNAME, false};
     if (size > 0 && size <= TCPIP_HOSTNAME_MAX_SIZE)
     {
+        // todo: validating allowed hostname chars
         memcpy(config.hostname, msg, size);
         if (size < TCPIP_HOSTNAME_MAX_SIZE)
             config.hostname[size] = 0x00; // terminate with null
