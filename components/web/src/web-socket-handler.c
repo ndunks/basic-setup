@@ -117,7 +117,8 @@ void ws_onmessage(ws_cli_conn_t *client,
             }
             else
             {
-                cur->handler(client, msg, size, type);
+                // Remove code
+                cur->handler(client, msg + 1, size - 1, type);
             }
         }
     }

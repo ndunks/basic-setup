@@ -116,7 +116,7 @@ esp_err_t config_save(void *handle)
     return err;
 }
 
-static void on_ws_client(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+static void on_ws_client(ws_cli_conn_t *client, const unsigned char *_, uint64_t size, int type)
 {
 
     // Send config struct without password
@@ -137,9 +137,9 @@ static void on_ws_login(ws_cli_conn_t *client, const unsigned char *msg, uint64_
 
     if (!client->is_login)
     {
-        if ((size - 1) > 0 && (size - 1) <= APP_NAME_MAX_SIZE)
+        if (size > 0 && size <= APP_NAME_MAX_SIZE)
         {
-            if (strncmp(config.password, (const char *)(msg + 1), size - 1) == 0)
+            if (strncmp(config.password, (const char *)(msg), size) == 0)
             {
                 // password matched
                 ws_msg[1] = true;
@@ -155,17 +155,39 @@ static void on_ws_update_hostname(ws_cli_conn_t *client, const unsigned char *ms
 {
 
     char ws_msg[2] = {WS_MSG_ID_UPDATE_HOSTNAME, false};
-    if ((size - 1) > 0 && (size - 1) <= TCPIP_HOSTNAME_MAX_SIZE)
+    if (size > 0 && size <= TCPIP_HOSTNAME_MAX_SIZE)
     {
-        memcpy(config.hostname, msg + 1, size - 1);
-        if (size - 1 < TCPIP_HOSTNAME_MAX_SIZE)
-            config.hostname[size - 1] = 0x00; // terminate with null
+        memcpy(config.hostname, msg, size);
+        if (size < TCPIP_HOSTNAME_MAX_SIZE)
+            config.hostname[size] = 0x00; // terminate with null
 
         if (config_save(NULL) == ESP_OK)
         {
             ws_msg[1] = true;
         }
     }
+    // Send reply to specific client
+    ws_sendframe_bin(client, ws_msg, 2);
+
+    // Broadcast update config
+    if (ws_msg[1] == true)
+        on_ws_client(NULL, NULL, 0, WS_FR_OP_BIN);
+}
+
+static void on_ws_update_switches(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+
+    char ws_msg[2] = {WS_MSG_ID_UPDATE_SWITCHES, false};
+    ssize_t expectedLen = sizeof(config.switches);
+    if (size == expectedLen)
+    {
+        memcpy(config.switches, msg, size);
+        if (config_save(NULL) == ESP_OK)
+        {
+            ws_msg[1] = true;
+        }
+    }
+
     // Send reply to specific client
     ws_sendframe_bin(client, ws_msg, 2);
 
@@ -222,5 +244,6 @@ esp_err_t config_load()
     web_socket_add_handler(WS_MSG_ID_LOGIN, &on_ws_login);
     web_socket_add_handler_auth(WS_MSG_ID_LOGOUT, &on_ws_logout, true);
     web_socket_add_handler_auth(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname, true);
+    web_socket_add_handler_auth(WS_MSG_ID_UPDATE_SWITCHES, &on_ws_update_switches, true);
     return err;
 }

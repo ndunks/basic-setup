@@ -23,7 +23,7 @@
 
 static void on_ws_update(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
-    actuator_update(msg[1]);
+    actuator_update(msg[0]);
 }
 
 void actuator_setup(unsigned char initial_value)

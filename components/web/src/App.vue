@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { mdiHomeLightbulb, mdiWeatherNight, mdiCog, mdiInfinity, mdiSwitch, mdiLock, mdiExitRun, mdiExitToApp } from '@mdi/js'
+import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch } from '@mdi/js'
 import { useApi } from "./api";
 import Switches from "./views/Switches.vue";
 import ConfigGeneral from "./views/ConfigGeneral.vue";
 import ConfigSwitches from "./views/ConfigSwitches.vue";
-import { useDisplay, useTheme } from "vuetify";
+import { useDisplay } from "vuetify";
 import Login from "./views/Login.vue";
 import { computed } from "vue";
-import { nextTick } from "vue";
 const api = useApi()
 const display = useDisplay()
 const loginDialog = ref(null)
@@ -22,11 +21,11 @@ function toggleDrawer() {
 
 const menus = [
   { text: "Settings", icon: mdiCog, view: ConfigGeneral },
-  { text: "Switches", icon: mdiSwitch, view: ConfigSwitches }
+  { text: "Switches", icon: mdiDipSwitch, view: ConfigSwitches }
 ]
 
 let currentSettingView = null
-const drawerLocation = computed(() => (display.mobile.value ? 'top' : 'right'))
+const drawerLocation = computed(() => (display.mobile.value ? 'top' : 'left'))
 
 function clickSettings(i: number) {
   currentSettingView = menus[i].view
@@ -91,7 +90,6 @@ function clickLogout() {
           <v-list-item :prepend-icon="mdiExitToApp" @click.stop="clickLogout" title="Logout" />
         </template>
         <template v-else>
-          <v-divider />
           <v-list-item :prepend-icon="mdiLock" @click.stop="clickLogin" title="Login" />
         </template>
         <!-- <v-list-item :prepend-icon="mdiWeatherNight" @click.stop="toggleTheme"

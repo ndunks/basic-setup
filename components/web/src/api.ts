@@ -1,8 +1,10 @@
 import type { Ref } from "vue";
 import { shallowRef } from "vue";
 import { ref } from "vue";
-import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN, WS_MSG_ID_LOGOUT, WS_MSG_ID_MESSAGE } from "./types";
+import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN, WS_MSG_ID_LOGOUT, WS_MSG_ID_MESSAGE, WS_MSG_ID_UPDATE_SWITCHES } from "./types";
 import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
+import { computed } from "vue";
+import { watch } from "vue";
 
 class Api {
     public status: Ref<ApiStatus> = ref(ApiStatus.DISCONNECTED)
@@ -10,6 +12,7 @@ class Api {
     public actuatorPendingUpdate = ref(0)
     public isConnected = ref(false)
     public isLogin = ref(false)
+    public isLoading = ref(false)
 
     // Actuator option: 1,2,3,4,5,6,7,8
     public switchNames = shallowRef([] as string[]);
@@ -29,6 +32,10 @@ class Api {
 
     constructor(private serverURL: string) {
         this.connect()
+        watch(() => this.waitingReplyStack.length, (v) => {
+            this.isLoading.value = !!v
+            console.debug(`Waiting stack`, v)
+        })
     }
 
     connect() {
@@ -67,6 +74,17 @@ class Api {
                 return this.isLogin.value = res
             }
         )
+    }
+
+    updateSwitchNames(names: string[]) {
+        const invalids = names.filter(v => v.length > APP_NAME_MAX_SIZE)
+
+        if (invalids.length)
+            return Promise.reject(`Max name length is ${APP_NAME_MAX_SIZE}`)
+
+        return this.requestTruthy(WS_MSG_ID_UPDATE_SWITCHES, names.map(
+            v => v.padEnd(APP_NAME_MAX_SIZE, "\x00")
+        ).join(""))
     }
 
     logout() {
