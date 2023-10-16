@@ -16,6 +16,12 @@ export const WS_MSG_ID_LOGOUT = 0x05
 export const WS_MSG_ID_MESSAGE = 0x06
 export const WS_MSG_ID_UPDATE_HOSTNAME = 0x07
 export const WS_MSG_ID_UPDATE_SWITCHES = 0x08
+
+export const WS_MSG_ID_STATE = 0x09
+export const WS_MSG_ID_WIFI_STA_SCAN = 0x0a
+export const WS_MSG_ID_WIFI_STA_UPDATE = 0x0b
+export const WS_MSG_ID_WIFI_AP_UPDATE = 0x0c
+
 export const TCPIP_HOSTNAME_MAX_SIZE = 32
 export const APP_NAME_MAX_SIZE = 28;
 /**

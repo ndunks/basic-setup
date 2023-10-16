@@ -11,6 +11,7 @@
 #include "config.h"
 #include "web-server.h"
 #include "driver/gpio.h"
+#include "web-socket-handler.h"
 
 static int cmd_dump(int argc, char **argv)
 {
@@ -34,6 +35,17 @@ static int cmd_dump(int argc, char **argv)
     }
     return 0;
 }
+
+// static void broadcast_state()
+// {
+//     char msg[2] = {WS_MSG_ID_STATE, 0x00};
+//     while (1)
+//     {
+//         xEventGroupWaitBits(APP_STATE, 0xff, 1, 0, 10000 / portTICK_PERIOD_MS);
+//         msg[1] = (char) STATE_CURRENT;
+//         ws_sendframe_bin(NULL, msg, 2);
+//     }
+// }
 
 void app_main()
 {
@@ -67,5 +79,6 @@ void app_main()
         .func = &cmd_dump,
         .argtable = NULL};
 
-    ESP_ERROR_CHECK(esp_console_cmd_register(&dump_cmd));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_console_cmd_register(&dump_cmd));
+    // xTaskCreate(&broadcast_state, "bcastState", 768, NULL, 2, NULL);
 }

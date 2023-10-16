@@ -288,7 +288,6 @@ extern "C"
 
     /* External usage. */
     extern char *ws_getaddress(ws_cli_conn_t *client);
-    extern ssize_t ws_send_broadcast(const char *buf, size_t buf_len, int flags);
     extern int ws_sendframe(
         ws_cli_conn_t *cli, const char *msg, uint64_t size, int type);
     extern int ws_sendframe_txt(ws_cli_conn_t *cli, const char *msg);

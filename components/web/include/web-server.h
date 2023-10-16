@@ -12,7 +12,7 @@ void web_server_main();
 typedef struct
 {
     const char *const name;
-    char * type;
+    const char *type;
     bool gzip;
     uint32_t offset;
     uint32_t size;
@@ -21,19 +21,19 @@ typedef struct
 // Generate command: node web.js
 /* GENERATED CODE START */
 static const char web_mime_image_png[] = "image/png";
-static const char web_mime_text_css[] = "text/css";
 static const char web_mime_application_javascript[] = "application/javascript";
+static const char web_mime_text_css[] = "text/css";
 static const char web_mime_text_html[] = "text/html";
 
 static webfs_t const web_files[] = {
     {.name = "favicon.png", .type = web_mime_image_png, .gzip = false, .offset = 0, .size = 772},
-    {.name = "index-8617b0d9.css", .type = web_mime_text_css, .gzip = true, .offset = 772, .size = 39184},
-    {.name = "index-9133389f.js", .type = web_mime_application_javascript, .gzip = true, .offset = 39956, .size = 85225},
-    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 125181, .size = 283}};
+    {.name = "index-82e4f125.js", .type = web_mime_application_javascript, .gzip = true, .offset = 772, .size = 85288},
+    {.name = "index-8617b0d9.css", .type = web_mime_text_css, .gzip = true, .offset = 86060, .size = 39184},
+    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 125244, .size = 283}};
 
 #define INDEX_HTML_OFS 3
 #define WEB_FILE_NAME_MAX 18
-    // Total size: 125464 bytes
-    // Generated at 10/16/2023, 2:48:54 PM
+    // Total size: 125527 bytes
+    // Generated at 10/16/2023, 8:57:37 PM
 /* GENERATED CODE END */
 #endif

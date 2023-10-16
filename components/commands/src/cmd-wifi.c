@@ -248,6 +248,19 @@ static esp_err_t cmd_ap_stop(int argc, char **argv)
     return app_wifi_ap_stop();
 }
 
+static void print_wifi_scan_results(uint16_t *len, wifi_ap_record_t *records)
+{
+    for (int i = 0; i < *len; i++)
+    {
+        printf("%s\t rssi %d auth %s\n", records[i].ssid, records[i].rssi, wifi_authmode_names[records[i].authmode]);
+    }
+}
+
+static esp_err_t cmd_ap_scan(int argc, char **argv)
+{
+    return app_wifi_scan(&print_wifi_scan_results);
+}
+
 void register_wifi()
 {
 
@@ -285,14 +298,22 @@ void register_wifi()
 
     const esp_console_cmd_t start_cmd = {
         .command = "start",
-        .help = "Join WiFi AP as a station",
+        .help = "Start WiFi AP",
         .hint = NULL,
         .func = &cmd_ap_start,
         .argtable = &connect_args};
+
+    const esp_console_cmd_t scan_cmd = {
+        .command = "scan",
+        .help = "Scan WiFi",
+        .hint = NULL,
+        .func = &cmd_ap_scan,
+        .argtable = NULL};
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&connect_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&disconnect_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&start_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&stop_cmd));
+    ESP_ERROR_CHECK(esp_console_cmd_register(&scan_cmd));
     ESP_ERROR_CHECK(esp_console_cmd_register(&ip_cmd));
 }

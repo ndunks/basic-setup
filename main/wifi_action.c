@@ -7,6 +7,26 @@
 #include "errors.h"
 
 #define TAG "app_wifi_action"
+/* Must be same order with wifi_auth_mode_t */
+const char *wifi_authmode_names[] = {
+    // WIFI_AUTH_OPEN
+    "open",
+    // WIFI_AUTH_WEP
+    "WEP",
+    // WIFI_AUTH_WPA_PSK
+    "WPA/PSK",
+    // WIFI_AUTH_WPA2_PSK
+    "WPA2/PSK",
+    // WIFI_AUTH_WPA_WPA2_PSK
+    "WPA/WPA2/PSK",
+    // WIFI_AUTH_WPA2_ENTERPRISE
+    "WPA2/ENTERPRISE",
+    // WIFI_AUTH_WPA3_PSK
+    "WPA3/PSK",
+    // WIFI_AUTH_WPA2_WPA3_PSK
+    "WPA2/WPA3/PSK",
+    // WIFI_AUTH_MAX
+    "Unknown"};
 
 static void set_wifi_mode(wifi_mode_t set_mode)
 {
@@ -46,10 +66,38 @@ static void unset_wifi_mode(wifi_mode_t set_mode)
     }
 }
 
+esp_err_t
+app_wifi_scan(void (*callback)(uint16_t *len, wifi_ap_record_t *ap_list_buffer))
+{
+
+    wifi_scan_config_t scan_config = {0};
+    uint16_t sta_number = 0;
+    wifi_ap_record_t *ap_list_buffer;
+    wifi_mode_t cur_mode;
+    if ((esp_wifi_get_mode(&cur_mode)) != ESP_OK)
+        return ESP_FAIL;
+
+    set_wifi_mode(WIFI_MODE_STA);
+    esp_wifi_scan_start(&scan_config, true);
+
+    esp_wifi_scan_get_ap_num(&sta_number);
+
+    ap_list_buffer = malloc(sta_number * sizeof(wifi_ap_record_t));
+    if (ap_list_buffer == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to malloc buffer to print scan results");
+        return ESP_ERR_NO_MEM;
+    }
+
+    if (esp_wifi_scan_get_ap_records(&sta_number, (wifi_ap_record_t *)ap_list_buffer) == ESP_OK)
+        callback(&sta_number, ap_list_buffer);
+
+    free(ap_list_buffer);
+    return ESP_OK;
+}
+
 esp_err_t app_wifi_ap_start(const char *ssid, const char *pass)
 {
-    esp_err_t err;
-
     if ((STATE_IS(STATE_AP_STARTED)))
     {
         // ESP_LOGI(TAG, "AP Already started");

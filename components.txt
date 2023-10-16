@@ -1,0 +1,55 @@
+Toolchain path: /home/rifin/app/xtensa-lx106-elf/bin/xtensa-lx106-elf-gcc
+Toolchain version: esp-2020r3-49-gd5524c1
+Compiler version: 8.4.0
+Python requirements from /home/rifin/app/ESP8266_RTOS_SDK/requirements.txt are satisfied.
+App "" version: 567c6a1
+CC build/app_update/esp_app_desc.o
+AR build/app_update/libapp_update.a
+CC build/main/main.o
+AR build/main/libmain.a
+CC build/web/src//web-server.o
+EMBED build/web/web.bin.bin.o
+AR build/web/libweb.a
+Generating esp8266.project.ld
+LD build/.elf
+Total sizes:
+ DRAM .data size:    1584 bytes
+ DRAM .bss  size:   12984 bytes
+Used static DRAM:   14568 bytes (  83736 available, 14.8% used)
+Used static IRAM:   25253 bytes (  23899 available, 51.4% used)
+      Flash code:  408904 bytes
+    Flash rodata:  184420 bytes
+Total image size:~ 620161 bytes (.bin may be padded larger)
+Per-archive contributions to ELF file:
+            Archive File DRAM .data & .bss   IRAM Flash code & rodata   Total
+                libweb.a         45   2230      0       8809   127649  138733
+               liblwip.a         17      0   2068      63832     1619   67536
+           libnet80211.a         70   1993     42      52400     4626   59131
+     libwpa_supplicant.a          8    816      0      52960     4169   57953
+            libmbedtls.a         40     12      0      37158    11721   48931
+                libphy.a         47    290   2393      39709     2252   44691
+                 libpp.a        387   3152  12961      17287     2928   36715
+             libc_nano.a          4     44      0      27092     1393   28533
+            libesp8266.a         18    546    153      15776     4925   21418
+          libnvs_flash.a          0     24      0      16616     3104   19744
+           libfreertos.a        540   1262   3353      11103     1212   17470
+                libgcc.a          0     37   1204      11624     2396   15261
+            libconsole.a          4     52      0      11143     1269   12468
+             libstdc++.a         24     72      0       5671     3877    9644
+               libmain.a          4    310      0       4144     2392    6850
+           libcommands.a          0     48      0       3669     2438    6155
+          libspi_flash.a         24      9   1759       3744      248    5784
+                libvfs.a        264     48      0       4668      448    5428
+      libtcpip_adapter.a          4    270      0       3606      298    4178
+          libesp_event.a          0      4      0       3181      822    4007
+            libpthread.a          0     16      0       3271      555    3842
+               libcore.a          0   1267    138       1913      202    3520
+         libesp_common.a          0      0      0         48     2679    2727
+        libesp_ringbuf.a          0      0      0       2626        0    2626
+             libnewlib.a          0    248      0       1234       57    1539
+               libheap.a          0     52    594        624        0    1270
+             libespnow.a          0     56      0        398      439     893
+                liblog.a         70     20    292        314        0     696
+                librtc.a          0      0      0        288        0     288
+         libapp_update.a          0      0      0          0      256     256
+                libhal.a          0      0     37          0        0      37

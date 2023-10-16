@@ -18,6 +18,11 @@ extern "C"
 #define WS_MSG_ID_UPDATE_HOSTNAME 0x07
 #define WS_MSG_ID_UPDATE_SWITCHES 0x08
 
+#define WS_MSG_ID_STATE 0x09
+#define WS_MSG_ID_WIFI_STA_SCAN 0x0a
+#define WS_MSG_ID_WIFI_STA_UPDATE 0x0b
+#define WS_MSG_ID_WIFI_AP_UPDATE 0x0c
+
     typedef void (*web_socket_handler)(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type);
 
     /**

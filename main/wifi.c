@@ -147,6 +147,9 @@ esp_err_t app_wifi_start(void)
             goto error3;
     }
 
+    // web_socket_add_handler_auth(WS_MSG_ID_LOGOUT, &on_ws_logout, true);
+    // web_socket_add_handler_auth(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname, true);
+
     return ESP_OK;
 
 error3:

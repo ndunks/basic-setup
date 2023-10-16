@@ -5,6 +5,7 @@ import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_
 import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
 import { computed } from "vue";
 import { watch } from "vue";
+import { reactive } from "vue";
 
 class Api {
     public status: Ref<ApiStatus> = ref(ApiStatus.DISCONNECTED)
@@ -13,6 +14,22 @@ class Api {
     public isConnected = ref(false)
     public isLogin = ref(false)
     public isLoading = ref(false)
+
+    /** Device state */
+    public state = reactive({
+        /** BIT 1: AP mode started */
+        AP_STARTED: false,
+        /** BIT 2: Wifi in error state */
+        WIFI_ERROR: false,
+        /** BIT 3: Connected to the internet */
+        INTERNET_CONNECTED: false,
+        /** BIT 4: Trying to connect AP */
+        STA_CONNECTING: false,
+        /** BIT 5: Connected to AP */
+        STA_CONNECTED: false,
+        /** BIT 6: Fail to connect after several retry */
+        STA_FAIL: false,
+    })
 
     // Actuator option: 1,2,3,4,5,6,7,8
     public switchNames = shallowRef([] as string[]);
