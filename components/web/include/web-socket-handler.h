@@ -19,9 +19,11 @@ extern "C"
 #define WS_MSG_ID_UPDATE_SWITCHES 0x08
 
     typedef void (*web_socket_handler)(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type);
+
     /**
      * null code mean invoke on new client connected
      */
+    int web_socket_add_handler_auth(unsigned char code, web_socket_handler handler, bool authenticated);
     int web_socket_add_handler(unsigned char code, web_socket_handler handler);
 #ifdef __cplusplus
 }

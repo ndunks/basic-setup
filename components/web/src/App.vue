@@ -14,22 +14,14 @@ const display = useDisplay()
 const loginDialog = ref(null)
 const settingDialog = ref(null)
 const drawer = ref<boolean | null>(null)
-const theme = useTheme()
-const isDarkMode = computed(() => theme.global.name.value == 'dark')
 
-function toggleTheme() {
-  const v = isDarkMode.value ? 'light' : 'dark'
-  theme.global.name.value = v
-  localStorage.setItem('mode', v)
-  drawer.value = false
-}
 
 function toggleDrawer() {
   drawer.value = !drawer.value
 }
 
 const menus = [
-  { text: "General", icon: mdiInfinity, view: ConfigGeneral },
+  { text: "Settings", icon: mdiCog, view: ConfigGeneral },
   { text: "Switches", icon: mdiSwitch, view: ConfigSwitches }
 ]
 
@@ -48,7 +40,20 @@ function clickSettings(i: number) {
   // }
 }
 
-function clickLogin() {
+async function clickLogin() {
+  const remembered = localStorage.getItem("remember")
+  if (remembered) {
+    // try to login directly
+    const loginSuccess = await api.login(remembered).catch(
+      e => {
+        // Login with remembered password failed, clear it
+        localStorage.removeItem("remember")
+        return false
+      }
+    )
+    if (loginSuccess) return
+  }
+
   currentSettingView = Login
   settingDialog.value = true
 }
@@ -82,12 +87,15 @@ function clickLogout() {
         <template v-if="api.isLogin.value">
           <v-list-item v-for="({ text, icon }, i) of menus" :prepend-icon="icon" :title="text"
             @click="clickSettings(i)" />
+          <v-divider />
           <v-list-item :prepend-icon="mdiExitToApp" @click.stop="clickLogout" title="Logout" />
         </template>
-        <v-list-item v-else :prepend-icon="mdiLock" @click.stop="clickLogin" title="Login" />
-        <v-divider />
-        <v-list-item :prepend-icon="mdiWeatherNight" @click.stop="toggleTheme"
-          :title="`${isDarkMode ? 'Light' : 'Dark'} Mode`" />
+        <template v-else>
+          <v-divider />
+          <v-list-item :prepend-icon="mdiLock" @click.stop="clickLogin" title="Login" />
+        </template>
+        <!-- <v-list-item :prepend-icon="mdiWeatherNight" @click.stop="toggleTheme"
+          :title="`${isDarkMode ? 'Light' : 'Dark'} Mode`" /> -->
       </v-list>
     </v-navigation-drawer>
     <v-main>
@@ -99,8 +107,7 @@ function clickLogout() {
         </v-row>
       </v-container>
     </v-main>
-    <v-dialog v-model="settingDialog" scrollable max-width="500" 
-    :close-on-back="false" :close-on-content-click="false">
+    <v-dialog v-model="settingDialog" scrollable max-width="500" :close-on-back="false" :close-on-content-click="false">
       <component @close="settingDialog = false" v-if="currentSettingView" :is="currentSettingView" />
     </v-dialog>
   </v-app>

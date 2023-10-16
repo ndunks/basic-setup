@@ -220,7 +220,7 @@ esp_err_t config_load()
     nvs_close(handle);
     web_socket_add_handler(WS_ON_OPEN, &on_ws_client);
     web_socket_add_handler(WS_MSG_ID_LOGIN, &on_ws_login);
-    web_socket_add_handler(WS_MSG_ID_LOGOUT, &on_ws_logout);
-    web_socket_add_handler(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname);
+    web_socket_add_handler_auth(WS_MSG_ID_LOGOUT, &on_ws_logout, true);
+    web_socket_add_handler_auth(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname, true);
     return err;
 }

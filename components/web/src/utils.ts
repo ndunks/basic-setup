@@ -13,13 +13,15 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
         sensors: string[];
     let ofs = 0;
 
-    function readStr(maxLen: number) {
-        let nullTerminated = false
+    function readStr(maxLen: number) {       
         const str = [...b.slice(ofs, ofs + maxLen)]
-            .filter(v => nullTerminated ? false : nullTerminated = !!v)
-            .map(v => String.fromCharCode(v)).join('')
         ofs += maxLen
-        return str
+        // Check null terminated string
+        let endStr = str.indexOf(0)
+        if( endStr > -1 ){
+            str.splice(endStr)
+        }    
+        return str.map(v => String.fromCharCode(v)).join('')
     }
 
 

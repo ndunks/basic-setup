@@ -2,9 +2,18 @@
 import { useApi } from '@/api';
 import { WS_MSG_ID_UPDATE_HOSTNAME } from '@/types';
 import { mdiClose, mdiCog, mdiLock, mdiPencil } from '@mdi/js';
+import { watch } from 'vue';
 import { onMounted, shallowRef } from 'vue';
+import { computed } from 'vue';
 import { ref } from 'vue';
-
+import { useTheme } from 'vuetify';
+const theme = useTheme()
+const isDarkMode = ref(theme.global.name.value == 'dark')
+watch(isDarkMode, () => {
+    const v = isDarkMode.value ? 'dark' : 'light'
+    theme.global.name.value = v
+    localStorage.setItem('mode', v)
+})
 const emits = defineEmits<{ (event: 'close') }>()
 
 const api = useApi()
@@ -24,30 +33,27 @@ function submit() {
 
 </script>
 <template>
-    <v-form @submit.prevent="submit">
-        <v-card>
-            <v-toolbar density="compact">
-                <template v-slot:prepend>
-                    <v-btn :icon="mdiCog"></v-btn>
-                </template>
+    <v-sheet>
+        <v-toolbar>
+            <template v-slot:prepend>
+                <v-icon :icon="mdiCog"></v-icon>
+            </template>
 
-                <v-toolbar-title>General Configuration</v-toolbar-title>
+            <v-toolbar-title>Settings</v-toolbar-title>
 
-                <template v-slot:append>
-                    <v-btn :icon="mdiClose" @click="$emit('close')"></v-btn>
-                </template>
-            </v-toolbar>
-            <v-card-item>
-                <v-text-field 
-                :error-messages="error"
-                density="compact" v-model="name" :prepend-icon="mdiPencil" label="Device Name" />
-            </v-card-item>
-            <v-card-actions>
+            <template v-slot:append>
+                <v-btn :icon="mdiClose" @click="$emit('close')"></v-btn>
+            </template>
+        </v-toolbar>
+        <v-form @submit.prevent="submit" class="pa-3">
+            <v-text-field :error-messages="error" clearable v-model="name" label="Device Name" />
+            <v-switch v-model="isDarkMode" label="Dark Mode" />
+            <div class="mt-2 d-flex">
                 <v-spacer />
                 <v-btn :loading="loading" type="submit" color="success">
                     Save
                 </v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-form>
+            </div>
+        </v-form>
+    </v-sheet>
 </template>

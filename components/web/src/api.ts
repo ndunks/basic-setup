@@ -1,7 +1,7 @@
 import type { Ref } from "vue";
 import { shallowRef } from "vue";
 import { ref } from "vue";
-import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN, WS_MSG_ID_LOGOUT } from "./types";
+import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN, WS_MSG_ID_LOGOUT, WS_MSG_ID_MESSAGE } from "./types";
 import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
 
 class Api {
@@ -62,8 +62,6 @@ class Api {
     }
 
     login(password: string): Promise<boolean> {
-        if (password.length > APP_NAME_MAX_SIZE)
-            return Promise.reject(Error("Password too long"))
         return this.requestTruthy(WS_MSG_ID_LOGIN, password, "Invalid password").then(
             res => {
                 return this.isLogin.value = res
@@ -72,7 +70,8 @@ class Api {
     }
 
     logout() {
-        return this.send(WS_MSG_ID_LOGOUT)
+        this.send(WS_MSG_ID_LOGOUT)
+        this.isLogin.value = false
     }
 
     send(code: number, payload?: string) {
@@ -105,10 +104,13 @@ class Api {
                 callback(msg: Uint8Array) {
                     clearTimeout(timeoutTimer)
                     removeWaiter()
-                    resolve(msg)
-                    // if( msg )
-                    //     resolve([...msg].map(v => String.fromCharCode(v)).join(''))
-                    // else resolve("")
+                    // maybe error message
+                    if (msg[0] == WS_MSG_ID_MESSAGE) {
+                        const errMsg = [...msg.slice(1)].map(v => String.fromCharCode(v)).join('')
+                        reject(new Error(errMsg || 'Unknown error'))
+                    } else {
+                        resolve(msg)
+                    }
                 }
             }
 
