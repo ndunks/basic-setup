@@ -1,13 +1,13 @@
 import type { Ref } from "vue";
 import { shallowRef } from "vue";
 import { ref } from "vue";
-import { APP_NAME_MAX_SIZE, ApiStatus, WS_MSG_ID_ACTUATOR, WS_MSG_ID_CONFIG, WS_MSG_ID_LOGIN, WS_MSG_ID_LOGOUT, WS_MSG_ID_MESSAGE, WS_MSG_ID_UPDATE_SWITCHES } from "./types";
+import { ApiStatus } from "./types";
 import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
 import { computed } from "vue";
 import { watch } from "vue";
 import { reactive } from "vue";
 
-class Api {
+export class Api {
     public status: Ref<ApiStatus> = ref(ApiStatus.DISCONNECTED)
     //public actuator: Array<Ref<boolean>> = [...new Array(8)].map( () => ref(null))
     public actuatorPendingUpdate = ref(0)
@@ -252,8 +252,4 @@ if (import.meta.env.DEV && import.meta.env.VITE_API) {
     wsHost = import.meta.env.VITE_API
 }
 
-const api = new Api(`ws://${wsHost}/ws`)
-
-export function useApi() {
-    return api
-}
+globalThis.api = new Api(`ws://${wsHost}/ws`)

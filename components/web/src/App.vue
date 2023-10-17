@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch } from '@mdi/js'
-import { useApi } from "./api";
 import Switches from "./views/Switches.vue";
 import ConfigGeneral from "./views/ConfigGeneral.vue";
 import ConfigSwitches from "./views/ConfigSwitches.vue";
 import { useDisplay } from "vuetify";
 import Login from "./views/Login.vue";
 import { computed } from "vue";
-const api = useApi()
 const display = useDisplay()
 const loginDialog = ref(null)
 const settingDialog = ref(null)

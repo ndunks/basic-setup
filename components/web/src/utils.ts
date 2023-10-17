@@ -1,4 +1,4 @@
-import { TCPIP_HOSTNAME_MAX_SIZE, type AppConfig, APP_NAME_MAX_SIZE } from "./types";
+import { type AppConfig } from "./types";
 
 export function parseAppConfigStruct(b: Uint8Array): AppConfig {
 

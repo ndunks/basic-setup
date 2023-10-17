@@ -3,27 +3,6 @@ export enum ApiStatus {
     DISCONNECTED, CONNECTED, CONNECTIING
 }
 
-/** #define WS_ON_OPEN 0x00 */
-export const WS_ON_OPEN = 0x00
-/** #define WS_MSG_ID_ACTUATOR 0x01 */
-export const WS_MSG_ID_ACTUATOR = 0x01
-/** #define WS_MSG_ID_CONFIG 0x02 */
-export const WS_MSG_ID_CONFIG = 0x02
-/** #define WS_MSG_ID_SENSOR 0x03 */
-export const WS_MSG_ID_SENSOR = 0x03
-export const WS_MSG_ID_LOGIN = 0x04
-export const WS_MSG_ID_LOGOUT = 0x05
-export const WS_MSG_ID_MESSAGE = 0x06
-export const WS_MSG_ID_UPDATE_HOSTNAME = 0x07
-export const WS_MSG_ID_UPDATE_SWITCHES = 0x08
-
-export const WS_MSG_ID_STATE = 0x09
-export const WS_MSG_ID_WIFI_STA_SCAN = 0x0a
-export const WS_MSG_ID_WIFI_STA_UPDATE = 0x0b
-export const WS_MSG_ID_WIFI_AP_UPDATE = 0x0c
-
-export const TCPIP_HOSTNAME_MAX_SIZE = 32
-export const APP_NAME_MAX_SIZE = 28;
 /**
 struct app_config
 {

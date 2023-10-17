@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { mdiClose, mdiDipSwitch } from '@mdi/js'
-import { useApi } from "@/api";
 import { ref } from 'vue';
-const api = useApi()
 const models = api.switchNames.value.map((v) => ref(v))
 const emits = defineEmits<{ (event: 'close') }>()
 

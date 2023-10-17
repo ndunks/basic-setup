@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { useApi } from '@/api';
-import { WS_MSG_ID_UPDATE_HOSTNAME } from '@/types';
 import { mdiClose, mdiCog, mdiLock, mdiPencil } from '@mdi/js';
 import { watch } from 'vue';
 import { onMounted, shallowRef } from 'vue';
@@ -15,8 +13,6 @@ watch(isDarkMode, () => {
     localStorage.setItem('mode', v)
 })
 const emits = defineEmits<{ (event: 'close') }>()
-
-const api = useApi()
 
 let error = shallowRef([])
 let name = ref(api.hostname.value)

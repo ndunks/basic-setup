@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { useApi } from '@/api';
 import { mdiEye, mdiEyeOff, mdiLock } from '@mdi/js';
 import { shallowRef } from 'vue';
-import { onMounted } from 'vue';
 import { ref } from 'vue';
-
-const api = useApi()
 
 const emits = defineEmits<{ (event: 'close') }>()
 const remembered = localStorage.getItem("remember")

@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { mdiLightbulb, mdiLightbulbOn } from '@mdi/js'
-import { useApi } from "../api";
-const api = useApi()
-
 </script>
 
 <template>
