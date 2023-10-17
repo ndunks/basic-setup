@@ -8,7 +8,6 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
         sensorLen: number,
         switchValues: number,
         hostname: string,
-        password: string,
         switches: string[],
         sensors: string[];
     let ofs = 0;
@@ -36,7 +35,6 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
     //     return null;
     // }
     hostname = readStr(TCPIP_HOSTNAME_MAX_SIZE)
-    password = readStr(APP_NAME_MAX_SIZE)
     switches = [...new Array(switchLen)].map((_, i) => {
         return readStr(APP_NAME_MAX_SIZE)
     })
@@ -50,7 +48,6 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
         sensorLen,
         switchValues,
         hostname,
-        password,
         switches,
         sensors,
     }

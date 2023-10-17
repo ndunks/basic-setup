@@ -17,6 +17,7 @@ const emits = defineEmits<{ (event: 'close') }>()
 let error = shallowRef([])
 let name = ref(api.hostname.value)
 const loading = ref(false)
+const showReset = ref(false)
 
 function submit() {
     loading.value = true
@@ -27,6 +28,12 @@ function submit() {
         .finally(() => loading.value = false)
 }
 
+function onResetConfig() {
+    if (!confirm('Are you sure want to reset device configuration?'))
+        return
+    api.send(WS_MSG_ID_RESET_CONFIG)
+    emits('close')
+}
 </script>
 <template>
     <v-sheet>
@@ -44,7 +51,14 @@ function submit() {
         <v-form @submit.prevent="submit" class="pa-3">
             <v-text-field :error-messages="error" clearable v-model="name" label="Device Name" />
             <v-switch v-model="isDarkMode" label="Dark Mode" />
+            <v-alert v-if="showReset" variant="elevated" type="warning">
+                Reset Configuration including password and switches
+                <v-divider class="my-3" />
+                <v-btn color="danger" @click="onResetConfig" variant="outlined">Reset</v-btn>
+            </v-alert>
             <div class="mt-2 d-flex">
+                <v-btn v-if="!showReset" variant="text" color="warning" size="small" @click="showReset = true">Reset
+                    Configuration</v-btn>
                 <v-spacer />
                 <v-btn :loading="loading" type="submit" color="success">
                     Save

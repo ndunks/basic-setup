@@ -43,6 +43,15 @@ int web_socket_add_handler_auth(unsigned char code, web_socket_handler handler, 
     return 0;
 }
 
+int web_socket_close_all_clients()
+{
+    int cc = WS_CLSE_NORMAL;
+    unsigned char clse_code[2];
+    clse_code[0] = (cc >> 8);
+    clse_code[1] = (cc & 0xFF);
+    return ws_sendframe(NULL, (const char *)clse_code, sizeof(char) * 2, WS_FR_OP_CLSE);
+}
+
 int web_socket_add_handler(unsigned char code, web_socket_handler handler)
 {
     return web_socket_add_handler_auth(code, handler, false);
@@ -94,11 +103,11 @@ void ws_onmessage(ws_cli_conn_t *client,
                   const unsigned char *msg, uint64_t size, int type)
 {
     ws_item_t *cur;
-    char *cli = ws_getaddress(client);
+    //char *cli = ws_getaddress(client);
     static char errUnauthorized[] = "\x00\x00Unauthorized";
     static char errCmdNotfound[] = "\x00\x00Invalid command";
 
-    printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
+    //printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
     if (size < 1)
         return; // too short
     int handledCount = 0;

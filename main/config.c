@@ -4,7 +4,9 @@
 #include "esp_err.h"
 #include "nvs.h"
 #include "esp8266/rom_functions.h"
+#include "esp_sha.h"
 #include "config.h"
+#include "terminal.h"
 #include "tcpip_adapter.h"
 #include "web-socket-handler.h"
 
@@ -16,15 +18,144 @@ struct app_config config;
 
 const char *APP_NVS_NAMESPACE = "app";
 static const char *CONFIG_NAMEKEY = "cfg";
+static const char *CONFIG_PWDKEY = "pwd";
+static const char CONFIG_DEFAULT_PASSWORD[] = "admin";
+
+static esp_err_t nvs_save(void *handle, const char *key, const char *data, size_t data_len)
+{
+    esp_err_t err;
+    nvs_handle_t local_handle = 0u;
+    if (handle == NULL)
+    {
+        err = nvs_open(APP_NVS_NAMESPACE, NVS_READWRITE, &local_handle);
+
+        if (err == ESP_ERR_NVS_NOT_INITIALIZED)
+        {
+            ESP_LOGE(TAG, "%s: NVS not ready", __func__);
+            return err;
+        }
+        else if (err != ESP_OK)
+        {
+            ESP_LOGW(TAG, "%s: %s (0x%x)", __func__, esp_err_to_name(err), err);
+            return err;
+        }
+        handle = &local_handle;
+    }
+
+    err = nvs_set_blob(*(nvs_handle_t *)handle, key, data, data_len);
+    if (err != ESP_OK)
+        ESP_LOGW(TAG, "%s: %s (0x%x)", __func__, esp_err_to_name(err), err);
+
+    // close if we opened it
+    if (local_handle)
+        nvs_close(local_handle);
+
+    return err;
+}
+
+esp_err_t nvs_clear(void *handle)
+{
+    esp_err_t err;
+    nvs_handle_t local_handle = 0u;
+    if (handle == NULL)
+    {
+        err = nvs_open(APP_NVS_NAMESPACE, NVS_READWRITE, &local_handle);
+
+        if (err == ESP_ERR_NVS_NOT_INITIALIZED)
+        {
+            ESP_LOGE(TAG, "%s: NVS not ready", __func__);
+            return err;
+        }
+        else if (err != ESP_OK)
+        {
+            ESP_LOGW(TAG, "%s: %s (0x%x)", __func__, esp_err_to_name(err), err);
+            return err;
+        }
+        handle = &local_handle;
+    }
+
+    err = nvs_erase_all(*(nvs_handle_t *)handle);
+    if (err != ESP_OK)
+        ESP_LOGW(TAG, "%s: %s (0x%x)", __func__, esp_err_to_name(err), err);
+
+    // close if we opened it
+    if (local_handle)
+        nvs_close(local_handle);
+
+    return err;
+}
+
+static int password_hash(const char *plain, size_t len, char *out32byte)
+{
+    esp_sha256_t ctx = {0};
+    esp_sha256_init(&ctx);
+    esp_sha256_update(&ctx, plain, len);
+    return esp_sha256_finish(&ctx, out32byte);
+}
+
+static esp_err_t password_check(const char *plain, size_t len)
+{
+    esp_err_t err;
+    nvs_handle_t handle;
+    char input_pwd[32] = {0};
+    char stored_pwd[32] = {0};
+    size_t stored_len = sizeof(stored_pwd);
+
+    if (password_hash(plain, len, input_pwd) != 0)
+        return ESP_FAIL;
+
+    err = nvs_open(APP_NVS_NAMESPACE, NVS_READONLY, &handle);
+
+    if (err != ESP_OK)
+    {
+        ESP_LOGW(TAG, "nvs_open: %s (0x%x)", esp_err_to_name(err), err);
+        return err;
+    }
+
+
+    err = nvs_get_blob(handle, CONFIG_PWDKEY, &stored_pwd, &stored_len);
+    if (err == ESP_OK)
+    {
+        ESP_LOGI(TAG, "Compare PWD, %u %u %02x%02x%02x%02x %02x%02x%02x%02x",
+                len, stored_len,
+                input_pwd[0], input_pwd[1], input_pwd[2], input_pwd[3],
+                stored_pwd[0], stored_pwd[1], stored_pwd[2], stored_pwd[3]);
+        if (stored_len != sizeof(stored_pwd))
+        {
+            ESP_LOGW(TAG, "%s: invalid length of pwd (%d)", __func__, stored_len);
+            err = ESP_FAIL;
+        }
+        else if (memcmp(stored_pwd, input_pwd, sizeof(stored_pwd)) != 0)
+            err = ESP_FAIL;
+    }
+    else
+        ESP_LOGW(TAG, "nvs_get_blob: %s (0x%x)", esp_err_to_name(err), err);
+
+    nvs_close(handle);
+    return err;
+}
+
+static esp_err_t update_password(const char *plain, size_t len, void *handle)
+{
+    char hashed[32] = {0};
+    if (password_hash(plain, len, hashed) != 0)
+        return ESP_FAIL;
+
+    return nvs_save(NULL, CONFIG_PWDKEY, hashed, sizeof(hashed));
+}
+
+esp_err_t config_save(void *handle)
+{
+    return nvs_save(handle, CONFIG_NAMEKEY, &config, sizeof(struct app_config));
+}
 
 void config_reset()
 {
     uint8_t mac[6];
-    esp_err_t err;
     int i;
     // todo: verify is correct ?
     uint32_t chip_id = g_rom_flashchip.device_id;
-    const char device_id[7 * 2 + 1];
+    char device_id[7 * 2 + 1];
 
     ESP_LOGI(TAG, __func__);
     // reset values
@@ -47,7 +178,6 @@ void config_reset()
     config.sensor_len = APP_SENSOR_COUNT;
     config.switch_values = 0;
     sprintf(config.hostname, "OSH-%s", device_id);
-    sprintf(config.password, "admin");
     for (i = 0; i < APP_SWITCH_COUNT; i++)
     {
         sprintf(config.switches[i], "Switch %d", i + 1);
@@ -67,48 +197,12 @@ void config_print()
            "\tswitch_len: %u\n"
            "\tsensor_len: %u\n"
            "\tswitch_values: %u\n"
-           "\thostname: %s\n"
-           "\tpassword: %s\n",
+           "\thostname: %s\n",
            config.config_version,
            config.switch_len,
            config.sensor_len,
            config.switch_values,
-           config.hostname,
-           config.password);
-}
-
-esp_err_t config_save(void *handle)
-{
-    esp_err_t err;
-    nvs_handle_t local_handle = 0u;
-    if (handle == NULL)
-    {
-        err = nvs_open(APP_NVS_NAMESPACE, NVS_READWRITE, &local_handle);
-
-        if (err == ESP_ERR_NVS_NOT_INITIALIZED)
-        {
-            ESP_LOGE(TAG, "%s: NVS has not been initialized. ", __func__);
-            return err;
-        }
-        else if (err != ESP_OK)
-        {
-            ESP_LOGW(TAG, "nvs_open: %s (0x%x)", esp_err_to_name(err), err);
-            return err;
-        }
-        handle = &local_handle;
-    }
-
-    err = nvs_set_blob(*(nvs_handle_t *)handle, CONFIG_NAMEKEY, &config, sizeof(struct app_config));
-    if (err != ESP_OK)
-    {
-        ESP_LOGW(TAG, "nvs_get_blob: %s (0x%x)", esp_err_to_name(err), err);
-    }
-
-    // close if we opened it
-    if (local_handle)
-        nvs_close(local_handle);
-
-    return err;
+           config.hostname);
 }
 
 static void on_ws_client(ws_cli_conn_t *client, const unsigned char *_, uint64_t size, int type)
@@ -119,11 +213,10 @@ static void on_ws_client(ws_cli_conn_t *client, const unsigned char *_, uint64_t
     char *ws_msg = malloc(len);
     ws_msg[0] = WS_MSG_ID_CONFIG;
     memcpy(ws_msg + 1, &config, len - 1);
-    // Nulled password
-    memset(ws_msg + 1 + (offsetof(struct app_config, password)), '*', APP_NAME_MAX_SIZE);
     ws_sendframe_bin(client, ws_msg, len);
     free(ws_msg);
 }
+
 static void on_ws_login(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
 
@@ -132,9 +225,9 @@ static void on_ws_login(ws_cli_conn_t *client, const unsigned char *msg, uint64_
 
     if (!client->is_login)
     {
-        if (size > 0 && size <= APP_NAME_MAX_SIZE)
+        if (size > 0 && size <= APP_PASSWORD_MAX_SIZE)
         {
-            if (strncmp(config.password, (const char *)(msg), size) == 0)
+            if (password_check((const char *)msg, size) == ESP_OK)
             {
                 // password matched
                 ws_msg[1] = true;
@@ -170,9 +263,21 @@ static void on_ws_update_hostname(ws_cli_conn_t *client, const unsigned char *ms
         on_ws_client(NULL, NULL, 0, WS_FR_OP_BIN);
 }
 
+static void on_ws_update_password(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    char ws_msg[2] = {WS_MSG_ID_UPDATE_PASSWORD, false};
+
+    if (size > 0 && size <= APP_PASSWORD_MAX_SIZE)
+    {
+        if (update_password((const char *)msg, size, NULL) == ESP_OK)
+            ws_msg[1] = true;
+    }
+    // Send reply to specific client
+    ws_sendframe_bin(client, ws_msg, 2);
+}
+
 static void on_ws_update_switches(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
-
     char ws_msg[2] = {WS_MSG_ID_UPDATE_SWITCHES, false};
     ssize_t expectedLen = sizeof(config.switches);
     if (size == expectedLen)
@@ -194,7 +299,29 @@ static void on_ws_update_switches(ws_cli_conn_t *client, const unsigned char *ms
 
 static void on_ws_logout(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
+    // Possible race
     client->is_login = false;
+}
+
+static void on_ws_restart(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    web_socket_close_all_clients();
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    esp_restart();
+}
+
+static void on_ws_reset_config(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    nvs_clear(NULL);
+    on_ws_restart(client, msg, size, type);
+}
+
+static int cmd_reset(int argc, char **argv)
+{
+    nvs_clear(NULL);
+    web_socket_close_all_clients();
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    return 0;
 }
 
 esp_err_t config_load()
@@ -207,7 +334,7 @@ esp_err_t config_load()
 
     if (err == ESP_ERR_NVS_NOT_INITIALIZED)
     {
-        ESP_LOGE(TAG, "%s: NVS has not been initialized. ", __func__);
+        ESP_LOGE(TAG, "%s: NVS not ready", __func__);
         return err;
     }
     else if (err != ESP_OK)
@@ -229,17 +356,31 @@ esp_err_t config_load()
 
     if (err != ESP_OK)
     {
+        ESP_LOGW(TAG, "(!) Reset configuration");
         config_reset();
+        update_password(CONFIG_DEFAULT_PASSWORD, sizeof(CONFIG_DEFAULT_PASSWORD) - 1, &handle);
         config_save(&handle);
     }
 
     config_print();
 
     nvs_close(handle);
+    const esp_console_cmd_t reset_cmd = {
+        .command = "reset",
+        .help = "Reset configuration",
+        .hint = NULL,
+        .func = &cmd_reset,
+        .argtable = NULL};
+
+    ESP_ERROR_CHECK_WITHOUT_ABORT(esp_console_cmd_register(&reset_cmd));
+
     web_socket_add_handler(WS_ON_OPEN, &on_ws_client);
     web_socket_add_handler(WS_MSG_ID_LOGIN, &on_ws_login);
     web_socket_add_handler_auth(WS_MSG_ID_LOGOUT, &on_ws_logout, true);
     web_socket_add_handler_auth(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname, true);
     web_socket_add_handler_auth(WS_MSG_ID_UPDATE_SWITCHES, &on_ws_update_switches, true);
+    web_socket_add_handler_auth(WS_MSG_ID_UPDATE_PASSWORD, &on_ws_update_password, true);
+    web_socket_add_handler_auth(WS_MSG_ID_RESET_CONFIG, &on_ws_reset_config, true);
+    web_socket_add_handler_auth(WS_MSG_ID_RESTART, &on_ws_restart, true);
     return err;
 }

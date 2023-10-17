@@ -4,6 +4,7 @@
 extern "C"
 {
 #endif
+    #include "esp_console.h"
     #include "FreeRTOS.h"
     #include "freertos/task.h"
 

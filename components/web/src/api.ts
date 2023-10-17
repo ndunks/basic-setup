@@ -85,12 +85,25 @@ export class Api {
         this.ws.send(uint8Array);
     }
 
-    login(password: string): Promise<boolean> {
+    login(password: string, remember = false): Promise<boolean> {
         return this.requestTruthy(WS_MSG_ID_LOGIN, password, "Invalid password").then(
             res => {
+                if (res && remember) {
+                    localStorage.setItem("remember", password)
+                }
                 return this.isLogin.value = res
             }
         )
+    }
+
+    autoLogin() {
+        const remembered = localStorage.getItem("remember")
+        if (remembered) {
+            return this.login(remembered).catch(
+                e => false
+            )
+        }
+        return Promise.resolve(false)
     }
 
     updateSwitchNames(names: string[]) {
@@ -184,6 +197,9 @@ export class Api {
 
         this.isConnected.value = true
         this.autoReconnectBackoff = 2
+        if(!this.isLogin.value){
+            this.autoLogin()
+        }
     }
 
     private wsActuatorUpdate(byte: number) {
@@ -209,9 +225,6 @@ export class Api {
 
     private wsOnOpen = () => {
         console.log("WS: Open");
-        // if (this.appConfig.value != null) {
-        //     this.status.value = ApiStatus.CONNECTED
-        // }// else: still waiting configration from device
     }
 
     private wsOnClose = () => {

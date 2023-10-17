@@ -27,8 +27,6 @@ export interface AppConfig {
     switchValues: number
     /** char[32]  */
     hostname: string
-    /** char[28] unused in client side */
-    password: string
     /** char[][28] Switch name */
     switches: string[]
     /** char[][28] Sensor name */

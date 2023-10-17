@@ -6,6 +6,7 @@
 #define APP_SWITCH_COUNT 8
 #define APP_SENSOR_COUNT 0
 #define APP_NAME_MAX_SIZE 28
+#define APP_PASSWORD_MAX_SIZE 128
 extern const char *APP_NVS_NAMESPACE;
 struct app_config
 {
@@ -14,7 +15,6 @@ struct app_config
     uint8_t sensor_len;
     uint8_t switch_values; // APP_SWITCH_COUNT / 8
     char hostname[TCPIP_HOSTNAME_MAX_SIZE];
-    char password[APP_NAME_MAX_SIZE];
     char switches[APP_SWITCH_COUNT][APP_NAME_MAX_SIZE];
     char sensors[APP_SENSOR_COUNT][APP_NAME_MAX_SIZE];
 };
@@ -23,6 +23,7 @@ extern struct app_config config;
 
 esp_err_t config_load();
 esp_err_t config_save(void *handle);
+esp_err_t nvs_clear(void *handle);
 void config_reset();
 void config_print();
 
