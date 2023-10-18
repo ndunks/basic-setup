@@ -104,8 +104,8 @@ void ws_onmessage(ws_cli_conn_t *client,
 {
     ws_item_t *cur;
     //char *cli = ws_getaddress(client);
-    static char errUnauthorized[] = "\x00\x00Unauthorized";
-    static char errCmdNotfound[] = "\x00\x00Invalid command";
+    static char errUnauthorized[] = "??Unauthorized";
+    static char errCmdNotfound[] = "??Invalid command";
 
     //printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
     if (size < 1)

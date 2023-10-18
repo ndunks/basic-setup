@@ -144,7 +144,7 @@ export class Api {
     }
 
     /** Syncronus request-response */
-    request(code: number, payload: string) {
+    request(code: number, payload?: string) {
         return new Promise<Uint8Array>((resolve, reject) => {
             let timeoutTimer
             const waiter = {

@@ -1,8 +1,10 @@
+#include <string.h>
 #include "state.h"
 #include "wifi.h"
 #include "esp_log.h"
 #include "esp_event.h"
 #include "config.h"
+#include "web-socket-handler.h"
 
 /**
  * Wifi logic and functionaly goes here
@@ -125,6 +127,65 @@ static void handle_ip_event(void *arg, esp_event_base_t event_base,
         break;
     }
 }
+volatile struct wifi_info
+{
+
+    unsigned char mac[6];
+    unsigned char padding1[2]; // padding
+    tcpip_adapter_ip_info_t net;
+    char ssid[32];
+    char password[64];
+    union
+    {
+        bool auto_connect;
+        bool ap_started;
+    };
+    unsigned char padding2[3]; // padding
+    wifi_auth_mode_t ap_authmode; // only for AP mode
+};
+volatile struct wifi_config_info
+{
+    unsigned char msg_id;
+    unsigned char padding[3]; // padding
+    wifi_mode_t mode;
+    struct wifi_info sta_info;
+    struct wifi_info ap_info;
+};
+
+static void
+on_ws_get_config(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    wifi_config_t cfg;
+    struct wifi_config_info ret = {0};
+    EventBits_t bits = STATE();
+    ret.msg_id = WS_MSG_ID_WIFI_CONFIG;
+    memset(ret.padding, 'X', 3);
+    //sizeof(struct wifi_info);
+
+    esp_wifi_get_mode(&ret.mode);
+    esp_read_mac(ret.sta_info.mac, ESP_MAC_WIFI_STA);
+    esp_read_mac(ret.ap_info.mac, ESP_MAC_WIFI_SOFTAP);
+    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ret.sta_info.net);
+    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_AP, &ret.ap_info.net);
+
+    // STA INFO
+    if (esp_wifi_get_config(ESP_IF_WIFI_STA, &cfg) == ESP_OK)
+    {
+        memcpy(ret.sta_info.ssid, cfg.sta.ssid, sizeof(cfg.sta.ssid));
+        memcpy(ret.sta_info.password, cfg.sta.password, sizeof(cfg.sta.password));
+        esp_wifi_get_auto_connect(&ret.sta_info.auto_connect);
+    }
+
+    // AP INFO
+    if (esp_wifi_get_config(ESP_IF_WIFI_AP, &cfg) == ESP_OK)
+    {
+        memcpy(ret.ap_info.ssid, cfg.ap.ssid, cfg.ap.ssid_len);
+        memcpy(ret.ap_info.password, cfg.ap.password, sizeof(cfg.ap.password));
+        ret.ap_info.ap_started = (bits & STATE_AP_STARTED) == STATE_AP_STARTED;
+        ret.ap_info.ap_authmode = cfg.ap.authmode;
+    }
+    ws_sendframe_bin(client, (void *)&ret, sizeof(struct wifi_config_info));
+}
 
 /* Called on system boot */
 esp_err_t app_wifi_start(void)
@@ -147,8 +208,7 @@ esp_err_t app_wifi_start(void)
             goto error3;
     }
 
-    // web_socket_add_handler_auth(WS_MSG_ID_LOGOUT, &on_ws_logout, true);
-    // web_socket_add_handler_auth(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname, true);
+    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG, &on_ws_get_config, true);
 
     return ESP_OK;
 

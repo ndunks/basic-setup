@@ -32,3 +32,73 @@ export interface AppConfig {
     /** char[][28] Sensor name */
     sensors: string[]
 }
+/**
+ * TCP-IP adatpter IPV4 
+ */
+export interface IpInfo {
+    /** u32_t addr */
+    ip: string
+    /** u32_t addr */
+    netmask: string
+    /** u32_t addr */
+    gw: string
+}
+export interface WifiInfo {
+    /** unsigned char mac[6] */
+    mac: string;
+    /** tcpip_adapter_ip_info_t net */
+    net: IpInfo;
+    /** char ssid[32] */
+    ssid: string;
+    /** char password[64] */
+    password: string;
+    // union
+    // {
+    // sta
+    auto_connect: boolean
+    // ap
+    ap_started: boolean
+    // };
+    /** only for AP mode */
+    ap_authmode: WifiAuthMode
+};
+export interface WifiConfigInfo {
+    // unsigned char msg_id;
+    mode: WifiMode;
+    sta: WifiInfo;
+    ap: WifiInfo;
+};
+
+export enum WifiMode {
+    /** WIFI_MODE_NULL: null mode */
+    Invactive,
+    /** WIFI_MODE_STA: WiFi station mode */
+    STA,
+    /** WIFI_MODE_AP: WiFi soft-AP mode */
+    AP,
+    /** WIFI_MODE_APSTA: WiFi station + soft-AP mode */
+    "AP+STA",
+    /** WIFI_MODE_MAX */
+    Unknown
+}
+
+export enum WifiAuthMode {
+    /** WIFI_AUTH_OPEN */
+    "open",
+    /** WIFI_AUTH_WEP */
+    "WEP",
+    /** WIFI_AUTH_WPA_PSK */
+    "WPA/PSK",
+    /** WIFI_AUTH_WPA2_PSK */
+    "WPA2/PSK",
+    /** WIFI_AUTH_WPA_WPA2_PSK */
+    "WPA/WPA2/PSK",
+    /** WIFI_AUTH_WPA2_ENTERPRISE */
+    "WPA2/ENTERPRISE",
+    /** WIFI_AUTH_WPA3_PSK */
+    "WPA3/PSK",
+    /** WIFI_AUTH_WPA2_WPA3_PSK */
+    "WPA2/WPA3/PSK",
+    /** WIFI_AUTH_MAX */
+    "Unknown"
+}

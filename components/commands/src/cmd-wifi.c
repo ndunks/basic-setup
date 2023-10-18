@@ -70,37 +70,7 @@ static void print_interface_info(wifi_interface_t type)
                 ifState = COLOR_OK("STARTED");
             else
                 ifState = COLOR_ERR("STOPPED");
-
-            switch (wifi_config.ap.authmode)
-            {
-            case WIFI_AUTH_OPEN:
-                sprintf(if_more, s_auth_mode, "open");
-                break;
-            case WIFI_AUTH_WEP:
-                sprintf(if_more, s_auth_mode, "WEP");
-                break;
-            case WIFI_AUTH_WPA_PSK:
-                sprintf(if_more, s_auth_mode, "WPA_PSK");
-                break;
-            case WIFI_AUTH_WPA2_PSK:
-                sprintf(if_more, s_auth_mode, "WPA2_PSK");
-                break;
-            case WIFI_AUTH_WPA_WPA2_PSK:
-                sprintf(if_more, s_auth_mode, "WPA_WPA2_PSK");
-                break;
-            case WIFI_AUTH_WPA2_ENTERPRISE:
-                sprintf(if_more, s_auth_mode, "WPA2_ENTERPRISE");
-                break;
-            case WIFI_AUTH_WPA3_PSK:
-                sprintf(if_more, s_auth_mode, "WPA3_PSK");
-                break;
-            case WIFI_AUTH_WPA2_WPA3_PSK:
-                sprintf(if_more, s_auth_mode, "WPA2_WPA3_PSK");
-                break;
-            default:
-                sprintf(if_more, s_auth_mode, "Unknown");
-                break;
-            }
+            sprintf(if_more, s_auth_mode, wifi_authmode_names[wifi_config.ap.authmode]);    
         }
         printf("Status: %s\n", ifState);
         if (ssidLen)

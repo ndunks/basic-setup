@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKeg, mdiKey, mdiRestart } from '@mdi/js'
+import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKeg, mdiKey, mdiRestart, mdiWifiCog } from '@mdi/js'
 import Switches from "./views/Switches.vue";
 import ConfigGeneral from "./views/ConfigGeneral.vue";
 import ConfigSwitches from "./views/ConfigSwitches.vue";
@@ -8,6 +8,7 @@ import { useDisplay } from "vuetify";
 import Login from "./views/Login.vue";
 import { computed } from "vue";
 import ConfigPassword from "./views/ConfigPassword.vue";
+import ConfigWifi from "./views/ConfigWifi.vue";
 const display = useDisplay()
 const settingDialog = ref(null)
 const drawer = ref<boolean | null>(null)
@@ -17,6 +18,7 @@ function toggleDrawer() {
 }
 
 const menus = [
+  { text: "Wifi", icon: mdiWifiCog, view: ConfigWifi },
   { text: "Switches", icon: mdiDipSwitch, view: ConfigSwitches },
   { text: "Password", icon: mdiKey, view: ConfigPassword },
   { text: "Settings", icon: mdiCog, view: ConfigGeneral },
@@ -66,7 +68,7 @@ function clickRestart() {
       <v-app-bar-nav-icon @click="toggleDrawer"></v-app-bar-nav-icon>
       <v-app-bar-title v-text="api.hostname.value" />
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" :location="drawerLocation" absolute>
+    <v-navigation-drawer v-model="drawer">
       <v-list>
         <template v-if="api.isLogin.value">
           <v-list-item v-for="({ text, icon }, i) of menus" :prepend-icon="icon" :title="text"
