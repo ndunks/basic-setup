@@ -49,7 +49,6 @@
  * @brief wsServer main routines.
  */
 
-
 /**
  * @brief Clients list.
  */
@@ -372,22 +371,22 @@ out:
  *
  * @param client Client connection.
  */
-static void set_client_address(ws_cli_conn_t *client)
-{
-    struct sockaddr_in addr;
-    socklen_t addr_size;
+// static void set_client_address(ws_cli_conn_t *client)
+// {
+//     struct sockaddr_in addr;
+//     socklen_t addr_size;
 
-    if (!CLIENT_VALID(client))
-        return;
+//     if (!CLIENT_VALID(client))
+//         return;
 
-    addr_size = sizeof(struct sockaddr_in);
+//     addr_size = sizeof(struct sockaddr_in);
 
-    if (getpeername(client->client_sock, (struct sockaddr *)&addr, &addr_size) < 0)
-        return;
+//     if (getpeername(client->client_sock, (struct sockaddr *)&addr, &addr_size) < 0)
+//         return;
 
-    memset(client->ip, 0, sizeof(client->ip));
-    inet_ntop(AF_INET, &addr.sin_addr, client->ip, INET_ADDRSTRLEN);
-}
+//     memset(client->ip, 0, sizeof(client->ip));
+//     inet_ntop(AF_INET, &addr.sin_addr, client->ip, INET_ADDRSTRLEN);
+// }
 
 /**
  * @brief Gets the IP address relative to a client connection opened
@@ -399,13 +398,13 @@ static void set_client_address(ws_cli_conn_t *client)
  *
  * @note The returned string is static, no need to free up memory.
  */
-char *ws_getaddress(ws_cli_conn_t *client)
-{
-    if (!CLIENT_VALID(client))
-        return (NULL);
+// char *ws_getaddress(ws_cli_conn_t *client)
+// {
+//     if (!CLIENT_VALID(client))
+//         return (NULL);
 
-    return (client->ip);
-}
+//     return (client->ip);
+// }
 
 /**
  * @brief Creates and send an WebSocket frame with some payload data.
@@ -1488,7 +1487,7 @@ static void *ws_establishconnection(ws_cli_conn_t *client)
  * @attention This is part of the internal API and is documented just
  * for completeness.
  */
-esp_err_t ws_accept(int sock, char *http_header, ssize_t http_header_len)
+esp_err_t ws_accept(int sock, char *client_info, char *http_header, ssize_t http_header_len)
 {
     struct sockaddr_in client; /* Client.                */
     pthread_t client_thread;   /* Client thread.         */
@@ -1506,7 +1505,8 @@ esp_err_t ws_accept(int sock, char *http_header, ssize_t http_header_len)
             client_socks[i].close_thrd = false;
             client_socks[i].last_pong_id = -1;
             client_socks[i].current_ping_id = -1;
-            set_client_address(&client_socks[i]);
+            strncpy(client_socks[i].info, client_info, sizeof(client_socks[i].info));
+            // set_client_address(&client_socks[i]);
 
             if (pthread_mutex_init(&client_socks[i].mtx_state, NULL))
                 panic("ENOMEM: close mutex");
@@ -1519,12 +1519,14 @@ esp_err_t ws_accept(int sock, char *http_header, ssize_t http_header_len)
             break;
         }
     }
+
     pthread_mutex_unlock(&mutex);
 
     if (i == MAX_CLIENTS)
         return WS_ERR_TOO_MANY_CLIENT;
 
     ws_cli_conn_t *wsclient = &client_socks[i];
+
     // Do handshake here
     if (do_handshake(wsclient, http_header) != ESP_OK)
     {

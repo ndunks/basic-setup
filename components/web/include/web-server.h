@@ -18,22 +18,29 @@ typedef struct
     uint32_t size;
 } webfs_t;
 
+#ifdef CONFIG_LWIP_IPV6
+    #define CLIENT_INFO_STR "[0000:0000:0000:0000:0000:0000:0000:0000]:PORT "
+#else
+    #define CLIENT_INFO_STR "000.000.000.000:PORT "
+#endif
+#define CLIENT_INFO_STR_LEN sizeof(CLIENT_INFO_STR)
+
 // Generate command: node web.js
 /* GENERATED CODE START */
 static const char web_mime_image_png[] = "image/png";
-static const char web_mime_text_css[] = "text/css";
 static const char web_mime_application_javascript[] = "application/javascript";
+static const char web_mime_text_css[] = "text/css";
 static const char web_mime_text_html[] = "text/html";
 
 static webfs_t const web_files[] = {
     {.name = "favicon.png", .type = web_mime_image_png, .gzip = false, .offset = 0, .size = 772},
-    {.name = "index-95dbcb71.css", .type = web_mime_text_css, .gzip = true, .offset = 772, .size = 39089},
-    {.name = "index-d6a3757b.js", .type = web_mime_application_javascript, .gzip = true, .offset = 39861, .size = 87869},
-    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 127730, .size = 283}};
+    {.name = "index-0abeb106.js", .type = web_mime_application_javascript, .gzip = true, .offset = 772, .size = 89167},
+    {.name = "index-95dbcb71.css", .type = web_mime_text_css, .gzip = true, .offset = 89939, .size = 39089},
+    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 129028, .size = 281}};
 
 #define INDEX_HTML_OFS 3
 #define WEB_FILE_NAME_MAX 18
-    // Total size: 128013 bytes
-    // Generated at 10/18/2023, 11:29:13 AM
+    // Total size: 129309 bytes
+    // Generated at 10/25/2023, 4:44:04 PM
 /* GENERATED CODE END */
 #endif

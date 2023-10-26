@@ -19,6 +19,7 @@
 #define HTTP_STATUS_400_BAD_REQUEST 400
 #define HTTP_STATUS_501_NOT_IMPLEMENTED 501
 #define HTTP_STATUS_429_TO_MANY 429
+#define WEBSOCKET_HANDLER -0x400
 
 /**
  * Usefull links
@@ -30,7 +31,7 @@ static int fd = -1, client_fd = -1;
 static TaskHandle_t http_task_handle;
 static SemaphoreHandle_t xSemaphore;
 static char http_buf[HTTP_BUF_SIZE + 1] = {0};
-
+static char client_info[CLIENT_INFO_STR_LEN] = {0};
 /**
  * Handle HTTP request.
  * Responsible to close the fd if is not UPGRADE/WebSocket request.
@@ -87,14 +88,14 @@ static esp_err_t http_handler()
     ssize_t http_header_len;
     int len, i;
 
-    if (ioctlsocket(client_fd, FIONREAD, &len))
-    {
-        ESP_LOGI(TAG, "Req sz %u", len);
-    }
+    // if (ioctlsocket(client_fd, FIONREAD, &len))
+    // {
+    //     ESP_LOGI(TAG, "Req sz %u", len);
+    // }
 
     http_header_len = recv(client_fd, http_buf, HTTP_BUF_SIZE, 0);
     http_buf[http_header_len] = 0;
-    // ESP_LOGI(TAG, "%u bytes\n%s", http_header_len, http_buf);
+    ESP_LOGI(TAG, "%u bytes\n%s", http_header_len, http_buf);
 
     // Minimal expected content is:
     // GET / HTTP/1.1\r\n\r\n (18 byte)
@@ -138,10 +139,10 @@ static esp_err_t http_handler()
         // Check for wss
         if (strncmp(path, "ws", 2) == 0)
         {
-            i = ws_accept(client_fd, http_buf, http_header_len);
+            i = ws_accept(client_fd, client_info, http_buf, http_header_len);
 
             if (i == ESP_OK)
-                return ESP_OK;
+                return WEBSOCKET_HANDLER;
 
             if (i == WS_ERR_TOO_MANY_CLIENT)
             {
@@ -176,6 +177,7 @@ static void http_thread(void *arg)
 {
     struct sockaddr_in addr_from;
     socklen_t addr_from_len = sizeof(addr_from);
+
     struct timeval tv = {
         .tv_sec = 5,
         .tv_usec = 0,
@@ -191,14 +193,18 @@ static void http_thread(void *arg)
             ESP_LOGW(TAG, "error in accept (%d)", errno);
             break;
         }
-
-        ESP_LOGI(TAG, "Client FD %d", client_fd);
-
+#ifdef CONFIG_LWIP_IPV6
+        sprintf(client_info, "[" IPV6STR "]:%u", IPV62STR((ip4_addr_t *)&addr_from.sin_addr), ntohs(addr_from.sin_port));
+#else
+        sprintf(client_info, IPSTR ":%u", IP2STR((ip4_addr_t *)&addr_from.sin_addr), ntohs(addr_from.sin_port));
+#endif
+        ESP_LOGI(client_info, "REQ FD %d", client_fd);
         // setsockopt(client_fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv));
         setsockopt(client_fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv));
-        http_handler();
-    }
 
+        if (http_handler() == ESP_OK)
+            ESP_LOGI(client_info, "CLOSE");
+    }
     ESP_LOGD(TAG, "exiting");
 }
 

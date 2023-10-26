@@ -34,6 +34,7 @@ extern "C"
 #include <stdint.h>
 #include <inttypes.h>
 #include "lwip/inet.h"
+#include "web-server.h"
 // Todo change it using CONFIG_APP_WS_VERBOSE
 #define VERBOSE_MODE
 #define WS_ERR_TOO_MANY_CLIENT -9
@@ -213,7 +214,7 @@ extern "C"
  * @brief Debug
  */
 #ifdef VERBOSE_MODE
-#define DEBUG(...) ESP_LOGI(TAG, __VA_ARGS__)
+#define DEBUG(...) ESP_LOGD(TAG, __VA_ARGS__)
 #else
 #define DEBUG(...)
 #endif
@@ -246,12 +247,7 @@ extern "C"
 
         /* Send lock. */
         pthread_mutex_t mtx_snd;
-    #ifdef CONFIG_LWIP_IPV6
-        /* IP address. */
-        char ip[INET6_ADDRSTRLEN];
-    #else
-        char ip[INET_ADDRSTRLEN];
-    #endif
+        char info[CLIENT_INFO_STR_LEN];
         /* Ping/Pong IDs and locks. */
         int32_t last_pong_id;
         int32_t current_ping_id;
@@ -287,14 +283,14 @@ extern "C"
     extern int get_handshake_response(char *hsrequest, char **hsresponse);
 
     /* External usage. */
-    extern char *ws_getaddress(ws_cli_conn_t *client);
+    //extern char *ws_getaddress(ws_cli_conn_t *client);
     extern int ws_sendframe(
         ws_cli_conn_t *cli, const char *msg, uint64_t size, int type);
     extern int ws_sendframe_txt(ws_cli_conn_t *cli, const char *msg);
     extern int ws_sendframe_bin(ws_cli_conn_t *cli, const char *msg, uint64_t size);
     extern int ws_get_state(ws_cli_conn_t *cli);
     extern int ws_close_client(ws_cli_conn_t *cli);
-    extern int ws_accept(int sock, char *http_header, ssize_t http_header_len);
+    extern int ws_accept(int sock, char *client_info, char *http_header, ssize_t http_header_len);
     void web_socket_main();
 
     /* Ping routines. */

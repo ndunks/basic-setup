@@ -4,6 +4,8 @@
 #include "main.h"
 #include "config.h"
 #include "web-socket-handler.h"
+#include <esp_log.h>
+#define TAG "ws-handler"
 
 typedef struct ws_item
 {
@@ -20,7 +22,7 @@ int web_socket_add_handler_auth(unsigned char code, web_socket_handler handler, 
     ws_item_t *new = calloc(1, sizeof(ws_item_t));
     if (new == NULL)
     {
-        printf("web_socket_add_handler: No mem\n");
+        ESP_LOGE(TAG, "web_socket_add_handler: No mem");
         return -1;
     }
     new->code = code;
@@ -60,9 +62,7 @@ int web_socket_add_handler(unsigned char code, web_socket_handler handler)
 void ws_onopen(ws_cli_conn_t *client)
 {
     ws_item_t *cur;
-    char *cli;
-    cli = ws_getaddress(client);
-    printf("Connection opened, addr: %s\n", cli);
+    ESP_LOGI(client->info, "WS opened");
 
     SLIST_FOREACH(cur, &ws_handler, next)
     {
@@ -80,9 +80,7 @@ void ws_onopen(ws_cli_conn_t *client)
  */
 void ws_onclose(ws_cli_conn_t *client)
 {
-    char *cli;
-    cli = ws_getaddress(client);
-    printf("Connection closed, addr: %s\n", cli);
+    ESP_LOGW(client->info, "WS closed");
 }
 
 /**
@@ -103,11 +101,11 @@ void ws_onmessage(ws_cli_conn_t *client,
                   const unsigned char *msg, uint64_t size, int type)
 {
     ws_item_t *cur;
-    //char *cli = ws_getaddress(client);
+    // char *cli = ws_getaddress(client);
     static char errUnauthorized[] = "??Unauthorized";
     static char errCmdNotfound[] = "??Invalid command";
 
-    //printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
+    // printf("I receive a message: %s (size: %u, type: %d), from: %s\n", msg, (uint32_t)size, type, cli);
     if (size < 1)
         return; // too short
     int handledCount = 0;
