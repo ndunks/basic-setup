@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKeg, mdiKey, mdiRestart, mdiWifiCog } from '@mdi/js'
+import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKeg, mdiKey, mdiRestart, mdiWifiCog, mdiAccessPoint, mdiWifiSettings } from '@mdi/js'
 import Switches from "./views/Switches.vue";
 import ConfigGeneral from "./views/ConfigGeneral.vue";
 import ConfigSwitches from "./views/ConfigSwitches.vue";
@@ -8,7 +8,10 @@ import { useDisplay } from "vuetify";
 import Login from "./views/Login.vue";
 import { computed } from "vue";
 import ConfigPassword from "./views/ConfigPassword.vue";
-import ConfigWifi from "./views/ConfigWifi.vue";
+import ConfigWifiSta from "./views/ConfigWifiSta.vue";
+import { onMounted } from "vue";
+import { watch } from "vue";
+import ConfigWifiAp from "./views/ConfigWifiAp.vue";
 const display = useDisplay()
 const settingDialog = ref(null)
 const drawer = ref<boolean | null>(null)
@@ -18,7 +21,8 @@ function toggleDrawer() {
 }
 
 const menus = [
-  { text: "Wifi", icon: mdiWifiCog, view: ConfigWifi },
+  { text: "Wifi Connection", icon: mdiWifiSettings, view: ConfigWifiSta },
+  { text: "SoftAP Broadcast", icon: mdiAccessPoint, view: ConfigWifiAp },
   { text: "Switches", icon: mdiDipSwitch, view: ConfigSwitches },
   { text: "Password", icon: mdiKey, view: ConfigPassword },
   { text: "Settings", icon: mdiCog, view: ConfigGeneral },
@@ -38,6 +42,13 @@ function clickSettings(i: number) {
   //   drawer.value = true
   // }
 }
+
+const w = watch(api.isConnected, () => {
+  clickSettings(1);
+  w();
+})
+// onMounted( () => {
+// })
 
 async function clickLogin() {
   // try to login with remembered password

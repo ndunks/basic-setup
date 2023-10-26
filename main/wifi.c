@@ -127,64 +127,69 @@ static void handle_ip_event(void *arg, esp_event_base_t event_base,
         break;
     }
 }
-volatile struct wifi_info
+struct wifi_config_sta
 {
-
+    unsigned char msg_id;
+    unsigned char is_enabled;
     unsigned char mac[6];
-    unsigned char padding1[2]; // padding
     tcpip_adapter_ip_info_t net;
     char ssid[32];
     char password[64];
-    union
-    {
-        bool auto_connect;
-        bool ap_started;
-    };
+    bool auto_connect;
     unsigned char padding2[3]; // padding
-    wifi_auth_mode_t ap_authmode; // only for AP mode
-};
-volatile struct wifi_config_info
-{
-    unsigned char msg_id;
-    unsigned char padding[3]; // padding
-    wifi_mode_t mode;
-    struct wifi_info sta_info;
-    struct wifi_info ap_info;
 };
 
 static void
-on_ws_get_config(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+on_ws_get_config_sta(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
-    wifi_config_t cfg;
-    struct wifi_config_info ret = {0};
+    wifi_config_t cfg = {0};
+    wifi_mode_t mode;
+    struct wifi_config_sta ret = {0};
+
+    ret.msg_id = WS_MSG_ID_WIFI_CONFIG_STA;
+    esp_wifi_get_mode(&mode);
+    ret.is_enabled = mode == WIFI_MODE_APSTA || mode == WIFI_MODE_STA;
+    esp_read_mac(ret.mac, ESP_MAC_WIFI_STA);
+    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ret.net);
+    esp_wifi_get_config(ESP_IF_WIFI_STA, &cfg);
+    memcpy(ret.ssid, cfg.sta.ssid, sizeof(cfg.sta.ssid));
+    memcpy(ret.password, cfg.sta.password, sizeof(cfg.sta.password));
+    esp_wifi_get_auto_connect(&ret.auto_connect);
+
+    ws_sendframe_bin(client, (void *)&ret, sizeof(struct wifi_config_sta));
+}
+struct wifi_config_ap
+{
+    unsigned char msg_id;
+    unsigned char is_enabled;
+    unsigned char mac[6];
+    tcpip_adapter_ip_info_t net;
+    char ssid[32];
+    char password[64];
+    bool is_started;
+    unsigned char authmode;
+    unsigned char padding2[2]; // padding
+};
+
+static void
+on_ws_get_config_ap(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    wifi_config_t cfg = {0};
+    wifi_mode_t mode;
+    struct wifi_config_ap ret = {0};
     EventBits_t bits = STATE();
-    ret.msg_id = WS_MSG_ID_WIFI_CONFIG;
-    memset(ret.padding, 'X', 3);
-    //sizeof(struct wifi_info);
+    ret.msg_id = WS_MSG_ID_WIFI_CONFIG_AP;
+    esp_wifi_get_mode(&mode);
+    ret.is_enabled = mode == WIFI_MODE_APSTA || mode == WIFI_MODE_AP;
 
-    esp_wifi_get_mode(&ret.mode);
-    esp_read_mac(ret.sta_info.mac, ESP_MAC_WIFI_STA);
-    esp_read_mac(ret.ap_info.mac, ESP_MAC_WIFI_SOFTAP);
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ret.sta_info.net);
-    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_AP, &ret.ap_info.net);
-
-    // STA INFO
-    if (esp_wifi_get_config(ESP_IF_WIFI_STA, &cfg) == ESP_OK)
-    {
-        memcpy(ret.sta_info.ssid, cfg.sta.ssid, sizeof(cfg.sta.ssid));
-        memcpy(ret.sta_info.password, cfg.sta.password, sizeof(cfg.sta.password));
-        esp_wifi_get_auto_connect(&ret.sta_info.auto_connect);
-    }
-
-    // AP INFO
-    if (esp_wifi_get_config(ESP_IF_WIFI_AP, &cfg) == ESP_OK)
-    {
-        memcpy(ret.ap_info.ssid, cfg.ap.ssid, cfg.ap.ssid_len);
-        memcpy(ret.ap_info.password, cfg.ap.password, sizeof(cfg.ap.password));
-        ret.ap_info.ap_started = (bits & STATE_AP_STARTED) == STATE_AP_STARTED;
-        ret.ap_info.ap_authmode = cfg.ap.authmode;
-    }
-    ws_sendframe_bin(client, (void *)&ret, sizeof(struct wifi_config_info));
+    esp_read_mac(ret.mac, ESP_MAC_WIFI_SOFTAP);
+    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_AP, &ret.net);
+    esp_wifi_get_config(ESP_IF_WIFI_AP, &cfg);
+    memcpy(ret.ssid, cfg.ap.ssid, cfg.ap.ssid_len);
+    memcpy(ret.password, cfg.ap.password, sizeof(cfg.ap.password));
+    ret.is_started = (bits & STATE_AP_STARTED) == STATE_AP_STARTED;
+    ret.authmode = cfg.ap.authmode & 0xff;
+    ws_sendframe_bin(client, (void *)&ret, sizeof(struct wifi_config_ap));
 }
 
 /* Called on system boot */
@@ -208,7 +213,8 @@ esp_err_t app_wifi_start(void)
             goto error3;
     }
 
-    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG, &on_ws_get_config, true);
+    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_AP, &on_ws_get_config_ap, true);
+    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_STA, &on_ws_get_config_sta, true);
 
     return ESP_OK;
 

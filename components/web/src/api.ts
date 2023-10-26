@@ -131,6 +131,7 @@ export class Api {
         this.ws.send(v)
         //this.isLogin.value = false
     }
+
     // Throw error on false
     requestTruthy(code: number, payload: string, errMsg = "Failed") {
         return this.request(code, payload).then(

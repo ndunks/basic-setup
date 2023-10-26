@@ -43,7 +43,8 @@ export interface IpInfo {
     /** u32_t addr */
     gw: string
 }
-export interface WifiInfo {
+export interface WifiConfigSta {
+    isEnabled: boolean
     /** unsigned char mac[6] */
     mac: string;
     /** tcpip_adapter_ip_info_t net */
@@ -52,22 +53,24 @@ export interface WifiInfo {
     ssid: string;
     /** char password[64] */
     password: string;
-    // union
-    // {
-    // sta
-    auto_connect: boolean
-    // ap
-    ap_started: boolean
-    // };
-    /** only for AP mode */
-    ap_authmode: WifiAuthMode
+    autoConnect?: boolean
 };
-export interface WifiConfigInfo {
-    // unsigned char msg_id;
-    mode: WifiMode;
-    sta: WifiInfo;
-    ap: WifiInfo;
-};
+export interface WifiConfigAp {
+    // unsigned char
+    isEnabled: boolean
+    /** unsigned char[6] */
+    mac: string;
+    /** tcpip_adapter_ip_info_t net */
+    net: IpInfo;
+    /** char[32] */
+    ssid: string;
+    /** char[64] */
+    password: string;
+    /** char **/
+    isStarted: boolean
+    /** char **/
+    authmode: WifiAuthMode
+}
 
 export enum WifiMode {
     /** WIFI_MODE_NULL: null mode */

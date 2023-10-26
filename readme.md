@@ -25,6 +25,19 @@ sudo apt-get install gcc git wget make libncurses-dev flex bison gperf python-is
 PYTHON=python3 make menuconfig
 ```
 
+## Wiring 
+
+## Shift Register
+
+- GPIO12 -> SHCP (Shift Register Clock Input)
+- GPIO13 -> DS   (Serial Data Input)
+- GPIO14 -> STCP (Storage Register Clock Input)
+
+## Analog Multiplexer
+
+- ADC0   -> Z
+
+
 # Device ID
 
 - Efuse
