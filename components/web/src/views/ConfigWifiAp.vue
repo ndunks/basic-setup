@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { WifiMode, type WifiConfigAp, WifiAuthMode } from '@/types';
-import { parseWifiConfigAp } from '@/utils';
+import { encodeWifiConfigAp, parseWifiConfigAp } from '@/utils';
 import { mdiClose, mdiCog, mdiLock, mdiPencil, mdiWifiCog } from '@mdi/js';
 import { watch } from 'vue';
 import { onMounted, shallowRef } from 'vue';
@@ -29,14 +29,14 @@ function submit() {
     if (!formValue.value) {
         return
     }
-
+    const payload = encodeWifiConfigAp(config.value)
     error.value = []
     loading.value = true
-    new Promise(r => setTimeout(r, 1000))
+    //new Promise(r => setTimeout(r, 1000))
 
-        // api.requestTruthy(WS_MSG_ID_UPDATE_HOSTNAME, name.value).then(
-        //     () => emits('close')
-        // ).catch(e => error.value = [e.message || e])
+    api.request(WS_MSG_ID_WIFI_CONFIG_AP, payload).then(
+        () => emits('close')
+    ).catch(e => error.value = [e.message || e])
         .finally(() => loading.value = false)
 }
 
@@ -92,11 +92,12 @@ const rules_ap_password = (v: string) => {
                 </p>
 
                 <v-switch label="Enable Broadcast SoftAP" v-model="config.isEnabled" inset color="success" />
-
-                <v-text-field :rules="[rule_required]" v-model="config.ssid" label="SSID" />
-                <v-switch color="error" v-model="apAllowNoPassword" label="Allow No Password" />
-                <v-text-field :rules="[rules_ap_password]" v-if="!apAllowNoPassword" v-model="config.password"
-                    label="Password" />
+                <template v-if="config.isEnabled">
+                    <v-text-field :rules="[rule_required]" v-model="config.ssid" label="SSID" />
+                    <v-switch color="error" v-model="apAllowNoPassword" label="No Password" />
+                    <v-text-field :rules="[rules_ap_password]" v-if="!apAllowNoPassword" v-model="config.password"
+                        label="Password" />
+                </template>
                 <div class="mt-2 d-flex">
                     <v-spacer />
                     <v-btn :disabled="!formValue" :loading="loading" type="submit" color="success">

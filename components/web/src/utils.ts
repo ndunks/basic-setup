@@ -20,6 +20,27 @@ export function parseWifiConfigAp(b: Uint8Array): WifiConfigAp {
     return cfg
 }
 
+export function encodeWifiConfigAp(b: WifiConfigAp): Uint8Array {
+    // sizeof(struct wifi_config_ap) = 120
+    const writer = Struct.encode(120 - 1) // exclude msgId
+    //writer.writeByte(WS_MSG_ID_WIFI_CONFIG_AP)
+
+
+    writer.writeBool(b.isEnabled)
+    writer.writeMac(b.mac)
+    //net: {
+    writer.writeIpV4(b.net.ip)
+    writer.writeIpV4(b.net.netmask)
+    writer.writeIpV4(b.net.gw)
+    //},
+    writer.writeString(b.ssid, 32)
+    writer.writeString(b.password, 64)
+    writer.writeBool(b.isStarted)
+    writer.writeByte(b.authmode)
+
+    return writer.getBytes()
+}
+
 export function parseWifiConfigSta(b: Uint8Array): WifiConfigSta {
     const reader = Struct.decode(b)
     const cfg: WifiConfigSta = {
@@ -36,6 +57,23 @@ export function parseWifiConfigSta(b: Uint8Array): WifiConfigSta {
 
     }
     return cfg
+}
+
+export function encodeWifiConfigSta(b: WifiConfigSta): Uint8Array {
+    // sizeof(struct wifi_config_sta) = 120
+    const writer = Struct.encode(120 - 1) // exclude msgId
+
+    writer.writeBool(b.isEnabled)
+    writer.writeMac(b.mac)
+    //net: {
+    writer.writeIpV4(b.net.ip)
+    writer.writeIpV4(b.net.netmask)
+    writer.writeIpV4(b.net.gw)
+    //},
+    writer.writeString(b.ssid, 32)
+    writer.writeString(b.password, 64)
+    writer.writeBool(b.autoConnect)
+    return writer.getBytes()
 }
 
 export function parseAppConfigStruct(b: Uint8Array): AppConfig {
@@ -60,7 +98,6 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
         }
         return str.map(v => String.fromCharCode(v)).join('')
     }
-
 
     // From Bigendian, readUint16
     configVersion = (((b[ofs]) & 0xff) >>> 0) | ((b[ofs + 1] << 8) & 0xff) >>> 0;

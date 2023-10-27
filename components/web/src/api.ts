@@ -122,12 +122,17 @@ export class Api {
         this.isLogin.value = false
     }
 
-    send(code: number, payload?: string) {
+    send(code: number, payload?: string | Uint8Array) {
         const len = payload ? payload.length : 0
         const v = new Uint8Array(len + 1);
         v[0] = code
-        if (len > 0)
-            v.set(payload.split('').map((v) => v.charCodeAt(0)), 1)
+        if (len > 0) {
+            if (typeof payload == 'string') {
+                v.set(payload.split('').map((v) => v.charCodeAt(0)), 1)
+            } else {
+                v.set(payload, 1)
+            }
+        }
         this.ws.send(v)
         //this.isLogin.value = false
     }
@@ -145,7 +150,7 @@ export class Api {
     }
 
     /** Syncronus request-response */
-    request(code: number, payload?: string) {
+    request(code: number, payload?: string | Uint8Array) {
         return new Promise<Uint8Array>((resolve, reject) => {
             let timeoutTimer
             const waiter = {
@@ -198,7 +203,7 @@ export class Api {
 
         this.isConnected.value = true
         this.autoReconnectBackoff = 2
-        if(!this.isLogin.value){
+        if (!this.isLogin.value) {
             this.autoLogin()
         }
     }

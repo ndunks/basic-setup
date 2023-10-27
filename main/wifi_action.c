@@ -28,7 +28,7 @@ const char *wifi_authmode_names[] = {
     // WIFI_AUTH_MAX
     "Unknown"};
 
-static void set_wifi_mode(wifi_mode_t set_mode)
+void set_wifi_mode(wifi_mode_t set_mode)
 {
     wifi_mode_t cur_mode;
     if ((esp_wifi_get_mode(&cur_mode)) != ESP_OK)
@@ -48,7 +48,7 @@ static void set_wifi_mode(wifi_mode_t set_mode)
     //     ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_set_auto_connect(true));
 }
 
-static void unset_wifi_mode(wifi_mode_t set_mode)
+void unset_wifi_mode(wifi_mode_t set_mode)
 {
     wifi_mode_t cur_mode;
     // if ((ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_get_mode(&cur_mode))) != ESP_OK)
@@ -117,8 +117,9 @@ esp_err_t app_wifi_ap_start(const char *ssid, const char *pass)
         }
 
         strncpy((char *)cfg.ap.ssid, ssid, sizeof(cfg.ap.ssid));
+        size_t passLen = strlen(pass);
 
-        if (pass)
+        if (pass && passLen > 0 && passLen <= 64)
         {
             strncpy((char *)cfg.ap.password, pass, sizeof(cfg.ap.password));
             cfg.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
@@ -131,7 +132,7 @@ esp_err_t app_wifi_ap_start(const char *ssid, const char *pass)
         else
             cfg.ap.max_connection = CONFIG_APP_WIFI_MAX_CLIENT;
 
-        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_set_config(ESP_IF_WIFI_STA, &cfg));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_set_config(WIFI_IF_AP, &cfg));
     }
 
     // If not connected because WIFI_START not triggered, call connect not

@@ -146,6 +146,20 @@ on_ws_get_config_sta(ws_cli_conn_t *client, const unsigned char *msg, uint64_t s
     wifi_mode_t mode;
     struct wifi_config_sta ret = {0};
 
+    if (size == sizeof(struct wifi_config_sta) - 1)
+    {
+        // exclude the msg_id
+        memcpy((((void *)&ret) + 1), msg, size);
+
+        ESP_LOGI(TAG, "Update %d " MACSTR "\nIPs " IPSTR " " IPSTR " " IPSTR " ssid: %s, p: %s\n %d", ret.is_enabled == 1, MAC2STR(ret.mac),
+                 IP2STR((ip4_addr_t *)&ret.net.ip), IP2STR((ip4_addr_t *)&ret.net.netmask), IP2STR((ip4_addr_t *)&ret.net.gw),
+                 ret.ssid, ret.password, ret.auto_connect);
+        if (ret.is_enabled)
+            app_wifi_connect(ret.ssid, ret.password);
+        else
+            app_wifi_disconnect();
+    }
+
     ret.msg_id = WS_MSG_ID_WIFI_CONFIG_STA;
     esp_wifi_get_mode(&mode);
     ret.is_enabled = mode == WIFI_MODE_APSTA || mode == WIFI_MODE_STA;
@@ -178,6 +192,22 @@ on_ws_get_config_ap(ws_cli_conn_t *client, const unsigned char *msg, uint64_t si
     wifi_mode_t mode;
     struct wifi_config_ap ret = {0};
     EventBits_t bits = STATE();
+
+    if (size == sizeof(struct wifi_config_ap) - 1)
+    {
+        // Request for update
+        // exclude the msg_id
+        memcpy((((void *)&ret) + 1), msg, size);
+
+        ESP_LOGI(TAG, "Update %d " MACSTR "\nIPs " IPSTR " " IPSTR " " IPSTR " ssid: %s, p: %s\n %d %d", ret.is_enabled == 1, MAC2STR(ret.mac),
+                 IP2STR((ip4_addr_t *)&ret.net.ip), IP2STR((ip4_addr_t *)&ret.net.netmask), IP2STR((ip4_addr_t *)&ret.net.gw),
+                 ret.ssid, ret.password, ret.is_started, ret.authmode);
+        if (ret.is_enabled)
+            app_wifi_ap_start(ret.ssid, ret.password);
+        else
+            app_wifi_ap_stop();
+    }
+
     ret.msg_id = WS_MSG_ID_WIFI_CONFIG_AP;
     esp_wifi_get_mode(&mode);
     ret.is_enabled = mode == WIFI_MODE_APSTA || mode == WIFI_MODE_AP;
