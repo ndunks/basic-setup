@@ -67,7 +67,7 @@ void unset_wifi_mode(wifi_mode_t set_mode)
 }
 
 esp_err_t
-app_wifi_scan(void (*callback)(uint16_t *len, wifi_ap_record_t *ap_list_buffer))
+app_wifi_scan(void (*callback)(uint16_t *len, wifi_ap_record_t *ap_list_buffer, void * param), void * param)
 {
 
     wifi_scan_config_t scan_config = {0};
@@ -90,7 +90,7 @@ app_wifi_scan(void (*callback)(uint16_t *len, wifi_ap_record_t *ap_list_buffer))
     }
 
     if (esp_wifi_scan_get_ap_records(&sta_number, (wifi_ap_record_t *)ap_list_buffer) == ESP_OK)
-        callback(&sta_number, ap_list_buffer);
+        callback(&sta_number, ap_list_buffer, param);
 
     free(ap_list_buffer);
     return ESP_OK;

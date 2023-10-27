@@ -70,7 +70,7 @@ static void print_interface_info(wifi_interface_t type)
                 ifState = COLOR_OK("STARTED");
             else
                 ifState = COLOR_ERR("STOPPED");
-            sprintf(if_more, s_auth_mode, wifi_authmode_names[wifi_config.ap.authmode]);    
+            sprintf(if_more, s_auth_mode, wifi_authmode_names[wifi_config.ap.authmode]);
         }
         printf("Status: %s\n", ifState);
         if (ssidLen)
@@ -218,7 +218,7 @@ static esp_err_t cmd_ap_stop(int argc, char **argv)
     return app_wifi_ap_stop();
 }
 
-static void print_wifi_scan_results(uint16_t *len, wifi_ap_record_t *records)
+static void print_wifi_scan_results(uint16_t *len, wifi_ap_record_t *records, void *param)
 {
     for (int i = 0; i < *len; i++)
     {
@@ -228,7 +228,7 @@ static void print_wifi_scan_results(uint16_t *len, wifi_ap_record_t *records)
 
 static esp_err_t cmd_ap_scan(int argc, char **argv)
 {
-    return app_wifi_scan(&print_wifi_scan_results);
+    return app_wifi_scan(&print_wifi_scan_results, NULL);
 }
 
 void register_wifi()

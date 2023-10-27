@@ -84,6 +84,16 @@ export enum WifiMode {
     /** WIFI_MODE_MAX */
     Unknown
 }
+//  struct ws_scan_result
+export interface WifiScanResult {
+    /** MAC address of AP */
+    bssid: string
+    /** char[33 SSID of AP */
+    ssid: string
+    /** signal strength of AP */
+    rssi: number
+    authmode: WifiAuthMode
+}
 
 export enum WifiAuthMode {
     /** WIFI_AUTH_OPEN */

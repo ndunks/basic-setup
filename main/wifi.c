@@ -221,6 +221,42 @@ on_ws_get_config_ap(ws_cli_conn_t *client, const unsigned char *msg, uint64_t si
     ret.authmode = cfg.ap.authmode & 0xff;
     ws_sendframe_bin(client, (void *)&ret, sizeof(struct wifi_config_ap));
 }
+struct ws_scan_result
+{
+    uint8_t bssid[6]; /**< MAC address of AP */
+    uint8_t ssid[33]; /**< SSID of AP */
+    int8_t rssi;      /**< signal strength of AP */
+    uint8_t authmode;
+    uint8_t padding[3];
+};
+
+static void send_scan_results(uint16_t *len, wifi_ap_record_t *records, void *param)
+{
+    size_t size = sizeof(struct ws_scan_result) * (*len) + 1;
+    char *msg = malloc(size);
+    struct ws_scan_result *res = (void *)(msg + 1);
+
+    msg[0] = WS_MSG_ID_WIFI_STA_SCAN;
+
+    ws_cli_conn_t *client = param;
+
+    for (int i = 0; i < *len; i++)
+    {
+        // scan_ptr =  msg + 1 + (sizeof(struct ws_scan_result) * i);
+        memcpy(res[i].bssid, records[i].bssid, sizeof(records[i].bssid));
+        memcpy(res[i].ssid, records[i].ssid, sizeof(records[i].ssid));
+        res[i].rssi = records[i].rssi;
+        res[i].authmode = records[i].authmode & 0xff;
+    }
+    ws_sendframe_bin(client, msg, size);
+}
+
+static void
+on_ws_sta_scan(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+
+    app_wifi_scan(&send_scan_results, client);
+}
 
 /* Called on system boot */
 esp_err_t app_wifi_start(void)
@@ -245,6 +281,7 @@ esp_err_t app_wifi_start(void)
 
     web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_AP, &on_ws_get_config_ap, true);
     web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_STA, &on_ws_get_config_sta, true);
+    web_socket_add_handler_auth(WS_MSG_ID_WIFI_STA_SCAN, &on_ws_sta_scan, true);
 
     return ESP_OK;
 

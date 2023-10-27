@@ -19,6 +19,10 @@ export default class Struct {
         return s
     }
 
+    remainingBytes() {
+        return this.bytes.length - this.pos
+    }
+
     getBytes() {
         return this.bytes
     }
@@ -29,6 +33,14 @@ export default class Struct {
 
     writeBool(v: boolean) {
         this.bytes[this.pos++] = (v === true) ? 1 : 0
+    }
+
+    readByte() {
+        return this.bytes[this.pos++]
+    }
+
+    readByteSigned() {
+        return this.bytes[this.pos++] << 24 >> 24
     }
 
     /** One byte enum */

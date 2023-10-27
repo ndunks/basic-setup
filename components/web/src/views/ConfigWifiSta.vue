@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { WifiMode, type WifiConfigSta, WifiAuthMode } from '@/types';
-import { parseWifiConfigSta } from '@/utils';
-import { mdiClose, mdiCog, mdiLock, mdiPencil, mdiWifiCog } from '@mdi/js';
+import { WifiMode, type WifiConfigSta, WifiAuthMode, type WifiScanResult } from '@/types';
+import { encodeWifiConfigSta, parseWifiConfigSta, parseWifiScan } from '@/utils';
+import { mdiClose, mdiCog, mdiLock, mdiPencil, mdiWifiCog, mdiWifiStrength1, mdiWifiStrength1Lock, mdiWifiStrength2, mdiWifiStrength2Lock, mdiWifiStrength3, mdiWifiStrength3Lock, mdiWifiStrength4, mdiWifiStrength4Lock, mdiWifiStrengthLockOutline, mdiWifiStrengthOutline, mdiWifiSync } from '@mdi/js';
 import { watch } from 'vue';
 import { onMounted, shallowRef } from 'vue';
 import { computed } from 'vue';
@@ -13,15 +13,60 @@ const emits = defineEmits<{ (event: 'close') }>()
 let error = shallowRef([])
 let config = ref<WifiConfigSta | null>(null)
 
-let name = ref(api.hostname.value)
+let selectedSsid = ref(null)
 const loading = ref(false)
 const requirePassword = ref(false)
+const scanning = ref(false)
+let formValue = ref<boolean | null>(null)
+const wifiList = shallowRef([] as (WifiScanResult & {icon: typeof mdiWifiStrength1})[])
+const wifiIconOpen = [
+    mdiWifiStrengthOutline,
+    mdiWifiStrength1,
+    mdiWifiStrength2,
+    mdiWifiStrength3,
+    mdiWifiStrength4,
+]
+
+const wifiIconLocked = [
+    mdiWifiStrengthLockOutline,
+    mdiWifiStrength1Lock,
+    mdiWifiStrength2Lock,
+    mdiWifiStrength3Lock,
+    mdiWifiStrength4Lock,
+]
+
+function scan() {
+    scanning.value = true
+    api.request(WS_MSG_ID_WIFI_STA_SCAN).then(
+        raw => {
+            wifiList.value = parseWifiScan(raw).map(
+                v => {
+                    let icon;
+                    let iconSet = (v.authmode == WifiAuthMode.open) ? wifiIconOpen : wifiIconLocked
+                    if( v.rssi >= 0 )
+                        icon = iconSet[0]
+                    else if( v.rssi > -60 )
+                        icon = iconSet[4]
+                    else if( v.rssi > -70 )
+                        icon = iconSet[3]
+                    else if( v.rssi > -80 )
+                        icon = iconSet[2]
+                    else
+                        icon = iconSet[1]
+                    return {...v, icon}
+                }
+            )
+            console.debug(wifiList)
+        }
+    ).finally(() => scanning.value = false)
+}
 
 function submit() {
     loading.value = true
     error.value = []
-    api.requestTruthy(WS_MSG_ID_UPDATE_HOSTNAME, name.value).then(
-        () => emits('close')
+    const payload = encodeWifiConfigSta(config.value)
+    api.request(WS_MSG_ID_WIFI_CONFIG_STA, payload).then(
+        updateConfig
     ).catch(e => error.value = [e.message || e])
         .finally(() => loading.value = false)
 }
@@ -30,14 +75,9 @@ const updateConfig = (cfgRaw: Uint8Array) => {
     const cfg = parseWifiConfigSta(cfgRaw)
     config.value = cfg
     console.debug(config.value)
+    selectedSsid.value = null
 }
 
-function onResetConfig() {
-    if (!confirm('Are you sure want to reset device configuration?'))
-        return
-    api.send(WS_MSG_ID_RESET_CONFIG)
-    emits('close')
-}
 onMounted(() => api.request(WS_MSG_ID_WIFI_CONFIG_STA).then(
     updateConfig
 ).catch((err) => {
@@ -58,39 +98,62 @@ const rules_ap_password = (v: string) => {
 
 </script>
 <template>
-    <v-sheet>
-        <v-toolbar>
-            <template v-slot:prepend>
-                <v-icon :icon="mdiWifiCog"></v-icon>
-            </template>
+    <v-form @submit.prevent="submit" v-model="formValue">
+        <v-card>
+            <v-toolbar density="compact">
+                <template v-slot:prepend>
+                    <v-icon :icon="mdiWifiCog"></v-icon>
+                </template>
+                <v-toolbar-title>Wifi Configuration</v-toolbar-title>
+                <template v-slot:append>
+                    <v-btn :loading="api.isLoading.value" :icon="mdiClose" @click="$emit('close')"></v-btn>
+                </template>
+            </v-toolbar>
+            <v-card-text>
 
-            <v-toolbar-title>Wifi Configuration</v-toolbar-title>
 
-            <template v-slot:append>
-                <v-btn :loading="api.isLoading.value" :icon="mdiClose" @click="$emit('close')"></v-btn>
-            </template>
-        </v-toolbar>
-        <v-alert v-if="!config">
-            <v-progress-linear indeterminate />
-        </v-alert>
-        <template v-else>
-            <v-form @submit.prevent="submit" class="pa-3">
-                <p class="my-5 mx-1 text-info">
-                    Connect to exisiting wifi networks.
-                </p>
-                <div class="d-flex">
-                    <v-text-field hide-details v-model="config.ssid" label="SSID" />
-                    <v-text-field hide-details v-model="config.password" label="Password" />
-                </div>
-                <v-switch color="info" v-model="config.autoConnect" label="Auto Connect" />
-                <div class="mt-2 d-flex">
-                    <v-spacer />
-                    <v-btn :loading="loading" type="submit" color="success">
-                        Save
-                    </v-btn>
-                </div>
-            </v-form>
+                <v-alert v-if="!config">
+                    <v-progress-linear indeterminate />
+                </v-alert>
+                <template v-else>
+                    <p class="text-info">
+                        Connect to exisiting wifi networks.
+                    </p>
+                    <v-switch label="Enable Wifi Connect" hide-details v-model="config.isEnabled" inset color="success" />
+                    <template v-if="config.isEnabled">
+                        <pre class="text-mutted pa-1 mb-3 border w-100" cols="3">
+Mac: {{ config.mac }}
+IP: {{ config.net.ip }}
+Netmask: {{ config.net.netmask }}
+Gateway: {{ config.net.gw }}
+SSID: {{ config.ssid }}
+Pass: {{ config.password }}</pre>
+                        
+                        <v-btn :loading="scanning" :prepend-icon="mdiWifiSync" @click="scan" color="info">Scan Wifi</v-btn>
+                        <v-list>
+                            <v-list-item v-for="item of wifiList"
+                            :title="item.ssid"
+                            :subtitle="`RSSI: ${item.rssi} Auth: ${WifiAuthMode[item.authmode]}`"
+                            :prepend-icon="item.icon"
+                            >
+                            </v-list-item>
+                        </v-list>
+                        <!-- <template v-if="selectedSsid">
+                            <v-text-field hide-details v-model="config.ssid" label="SSID" />
+                            <v-text-field v-if="requirePassword" hide-details v-model="config.password" label="Password" />
+                        </template> -->
+                    </template>
 
-        </template>
-    </v-sheet>
+
+                </template>
+            </v-card-text>
+            <v-divider />
+            <v-card-actions>
+                <v-spacer />
+                <v-btn :loading="loading" type="submit" color="success" variant="tonal">
+                    Save
+                </v-btn>
+            </v-card-actions>
+        </v-card>
+    </v-form>
 </template>

@@ -44,7 +44,7 @@ function clickSettings(i: number) {
 }
 
 const w = watch(api.isConnected, () => {
-  clickSettings(1);
+  clickSettings(0);
   w();
 })
 // onMounted( () => {

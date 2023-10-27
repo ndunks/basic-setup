@@ -18,8 +18,6 @@ const emits = defineEmits<{ (event: 'close') }>()
 
 let error = shallowRef([])
 let config = ref<WifiConfigAp | null>(null)
-
-let name = ref(api.hostname.value)
 let formValue = ref<boolean | null>(null)
 
 const loading = ref(false)
@@ -82,6 +80,7 @@ const rules_ap_password = (v: string) => {
                 <v-btn :loading="api.isLoading.value" :icon="mdiClose" @click="$emit('close')"></v-btn>
             </template>
         </v-toolbar>
+
         <v-alert v-if="!config">
             <v-progress-linear indeterminate />
         </v-alert>
@@ -93,6 +92,9 @@ const rules_ap_password = (v: string) => {
 
                 <v-switch label="Enable Broadcast SoftAP" v-model="config.isEnabled" inset color="success" />
                 <template v-if="config.isEnabled">
+                    <pre class="text-mutted pa-1 mb-3 border w-100" cols="3">
+Mac: {{ config.mac }}
+IP: {{ config.net.ip }}</pre>
                     <v-text-field :rules="[rule_required]" v-model="config.ssid" label="SSID" />
                     <v-switch color="error" v-model="apAllowNoPassword" label="No Password" />
                     <v-text-field :rules="[rules_ap_password]" v-if="!apAllowNoPassword" v-model="config.password"

@@ -1,5 +1,5 @@
 import Struct from "./struct";
-import { type AppConfig, type WifiConfigAp, type WifiConfigSta, WifiMode, WifiAuthMode, type IpInfo } from "./types";
+import { type AppConfig, type WifiConfigAp, type WifiConfigSta, WifiMode, WifiAuthMode, type IpInfo, type WifiScanResult } from "./types";
 
 export function parseWifiConfigAp(b: Uint8Array): WifiConfigAp {
     const reader = Struct.decode(b)
@@ -74,6 +74,40 @@ export function encodeWifiConfigSta(b: WifiConfigSta): Uint8Array {
     writer.writeString(b.password, 64)
     writer.writeBool(b.autoConnect)
     return writer.getBytes()
+}
+/* 
+00000000: 0b
+18a6f730b3a8
+25
+736177616800000000000000000000000000000000000000000000000000000000
+
+c3
+03
+0000 0030 9935  ........... . .0 .5
+00000003: d30a 6868 6f6d 6500 0000 0000 0000 0000  ..hhome.........
+00000004: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000005: 0000 0000 bf04 0000 0070 4f57 f75c da52  .........pOW.\.R
+00000006: 554d 4148 5f4b 5500 0000 0000 0000 0000  UMAH_KU.........
+00000007: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000008: aa03 0000 00                             .....
+ */
+
+export function parseWifiScan(b: Uint8Array) {
+    const results: WifiScanResult[] = []
+    const reader = Struct.decode(b);
+    // sizeof(struct ws_scan_result) = 44
+
+    while (reader.remainingBytes() >= 44) {
+        results.push({
+            bssid: reader.readMac(),
+            ssid: reader.readString(33),
+            rssi: reader.readByteSigned(),
+            authmode: reader.readEnum(WifiAuthMode)
+        })
+        // remove padding
+        reader.readBytes(3)
+    }
+    return results;
 }
 
 export function parseAppConfigStruct(b: Uint8Array): AppConfig {
