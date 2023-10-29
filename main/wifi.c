@@ -140,7 +140,7 @@ struct wifi_config_sta
 };
 
 static void
-on_ws_get_config_sta(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+on_ws_get_set_config_sta(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
     wifi_config_t cfg = {0};
     wifi_mode_t mode;
@@ -186,7 +186,7 @@ struct wifi_config_ap
 };
 
 static void
-on_ws_get_config_ap(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+on_ws_get_set_config_ap(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
     wifi_config_t cfg = {0};
     wifi_mode_t mode;
@@ -279,8 +279,8 @@ esp_err_t app_wifi_start(void)
             goto error3;
     }
 
-    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_AP, &on_ws_get_config_ap, true);
-    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_STA, &on_ws_get_config_sta, true);
+    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_AP, &on_ws_get_set_config_ap, true);
+    web_socket_add_handler_auth(WS_MSG_ID_WIFI_CONFIG_STA, &on_ws_get_set_config_sta, true);
     web_socket_add_handler_auth(WS_MSG_ID_WIFI_STA_SCAN, &on_ws_sta_scan, true);
 
     return ESP_OK;

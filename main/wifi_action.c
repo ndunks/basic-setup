@@ -160,7 +160,7 @@ esp_err_t app_wifi_connect(const char *ssid, const char *pass)
 {
     EventBits_t bits = STATE();
 
-    if ((bits & (STATE_STA_CONNECTED | STATE_STA_CONNECTING)))
+    if ((bits & (STATE_STA_CONNECTING)))
     {
         ESP_LOGI(TAG, "Already connecting %08x", bits);
         return APP_ERR_ALREADY_CONNECTED;
@@ -175,7 +175,7 @@ esp_err_t app_wifi_connect(const char *ssid, const char *pass)
         wifi_config_t wifi_config = {0};
         strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
 
-        if (pass)
+        if (pass != NULL && strlen(pass) >= 8)
             strncpy((char *)wifi_config.sta.password, pass, sizeof(wifi_config.sta.password));
 
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));

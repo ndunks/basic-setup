@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { mdiClose, mdiCog, mdiLock, mdiPencil } from '@mdi/js';
+import { mdiClose, mdiCog } from '@mdi/js';
 import { watch } from 'vue';
-import { onMounted, shallowRef } from 'vue';
-import { computed } from 'vue';
+import { shallowRef } from 'vue';
 import { ref } from 'vue';
 import { useTheme } from 'vuetify';
 const theme = useTheme()

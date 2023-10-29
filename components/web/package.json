@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check build-only",
-    "postbuild": "node web.js",
+    "header": "node web.js",
     "size": "echo $(( `cat dist/* | wc -c` / 1024)) KB",
     "preview": "vite preview",
     "build-only": "vite build",

@@ -1,19 +1,17 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKeg, mdiKey, mdiRestart, mdiWifiCog, mdiAccessPoint, mdiWifiSettings } from '@mdi/js'
+import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKey, mdiRestart, mdiAccessPoint, mdiWifiSettings } from '@mdi/js'
 import Switches from "./views/Switches.vue";
 import ConfigGeneral from "./views/ConfigGeneral.vue";
 import ConfigSwitches from "./views/ConfigSwitches.vue";
-import { useDisplay } from "vuetify";
 import Login from "./views/Login.vue";
-import { computed } from "vue";
 import ConfigPassword from "./views/ConfigPassword.vue";
 import ConfigWifiSta from "./views/ConfigWifiSta.vue";
-import { onMounted } from "vue";
 import { watch } from "vue";
 import ConfigWifiAp from "./views/ConfigWifiAp.vue";
-const display = useDisplay()
+
 const settingDialog = ref(null)
+const connectDialog = ref(true)
 const drawer = ref<boolean | null>(null)
 
 function toggleDrawer() {
@@ -29,26 +27,15 @@ const menus = [
 ]
 
 let currentSettingView = null
-const drawerLocation = computed(() => (display.mobile.value ? 'top' : 'left'))
 
 function clickSettings(i: number) {
   currentSettingView = menus[i].view
   drawer.value = false
   settingDialog.value = true
-  // if (!api.isLogin.value) {
-  //   // loginDialog.value = true
-  // } else {
-  //   // loginDialog.value = false
-  //   drawer.value = true
-  // }
 }
-
-const w = watch(api.isConnected, () => {
-  clickSettings(0);
-  w();
+watch(api.isConnected, (isConnected) => {
+  connectDialog.value = !isConnected
 })
-// onMounted( () => {
-// })
 
 async function clickLogin() {
   // try to login with remembered password
@@ -106,6 +93,16 @@ function clickRestart() {
     </v-main>
     <v-dialog v-model="settingDialog" scrollable max-width="500" :close-on-back="false" :close-on-content-click="false">
       <component @close="settingDialog = false" v-if="currentSettingView" :is="currentSettingView" />
+    </v-dialog>
+    <v-dialog v-model="connectDialog" max-width="360" :close-on-back="false" :close-on-content-click="false">
+      <v-card color="warning">
+        <v-card-text>
+          <VProgressLinear indeterminate class="mb-3" />
+          <p>
+            Connecting to device on {{ api.host }}
+          </p>
+        </v-card-text>
+      </v-card>
     </v-dialog>
   </v-app>
 </template>

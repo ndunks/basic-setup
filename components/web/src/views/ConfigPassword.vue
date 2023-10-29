@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { mdiClose, mdiCog, mdiKey, mdiLock, mdiPencil } from '@mdi/js';
-import { watch } from 'vue';
-import { onMounted, shallowRef } from 'vue';
-import { computed } from 'vue';
+import { mdiClose, mdiKey } from '@mdi/js';
+import { shallowRef } from 'vue';
 import { ref } from 'vue';
 
 const emits = defineEmits<{ (event: 'close') }>()

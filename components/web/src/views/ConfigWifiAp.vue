@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { WifiMode, type WifiConfigAp, WifiAuthMode } from '@/types';
+import { type WifiConfigAp, WifiAuthMode } from '@/types';
 import { encodeWifiConfigAp, parseWifiConfigAp } from '@/utils';
-import { mdiClose, mdiCog, mdiLock, mdiPencil, mdiWifiCog } from '@mdi/js';
+import { mdiClose, mdiWifiCog } from '@mdi/js';
 import { watch } from 'vue';
 import { onMounted, shallowRef } from 'vue';
-import { computed } from 'vue';
 import { ref } from 'vue';
 import { useTheme } from 'vuetify';
 const theme = useTheme()

@@ -3,7 +3,6 @@ import { shallowRef } from "vue";
 import { ref } from "vue";
 import { ApiStatus } from "./types";
 import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
-import { computed } from "vue";
 import { watch } from "vue";
 import { reactive } from "vue";
 
@@ -47,12 +46,17 @@ export class Api {
 
     private waitingReplyStack: { code: number, callback: (msg: Uint8Array) => void }[] = []
 
-    constructor(private serverURL: string) {
-        this.connect()
+    constructor(public host: string) {
         watch(() => this.waitingReplyStack.length, (v) => {
             this.isLoading.value = !!v
             console.debug(`Waiting stack`, v)
         })
+        
+        watch( this.status, status => {
+            this.isConnected.value = status == ApiStatus.CONNECTED
+        })
+
+        this.connect()
     }
 
     connect() {
@@ -63,13 +67,14 @@ export class Api {
             throw new Error('Already connected')
         }
 
-        this.ws = new WebSocket(this.serverURL)
+        this.ws = new WebSocket(`ws://${this.host}/ws`)
         this.ws.addEventListener('open', this.wsOnOpen);
         this.ws.addEventListener('close', this.wsOnClose);
         this.ws.addEventListener('message', this.wsOnMessage);
     }
 
     disconnect() {
+        console.debug('WS Disconnect')
         this.status.value = ApiStatus.DISCONNECTED
         this.autoReconnect = false
         this.ws.close()
@@ -196,12 +201,12 @@ export class Api {
         if (this.status.value == ApiStatus.CONNECTIING) {
             // First time get config
             this.status.value = ApiStatus.CONNECTED
+            console.debug('WS Connected')
         }
         this.hostname.value = config.hostname
         this.switchNames.value = config.switches
         this.switchActives.value = bitsOnToArray(config.switchValues)
 
-        this.isConnected.value = true
         this.autoReconnectBackoff = 2
         if (!this.isLogin.value) {
             this.autoLogin()
@@ -235,7 +240,7 @@ export class Api {
 
     private wsOnClose = () => {
         console.log("WS: Close");
-        this.isConnected.value = false
+        this.status.value = ApiStatus.DISCONNECTED
         this.isLogin.value = false
 
         this.ws.removeEventListener('open', this.wsOnOpen);
@@ -271,4 +276,4 @@ if (import.meta.env.DEV && import.meta.env.VITE_API) {
     wsHost = import.meta.env.VITE_API
 }
 
-globalThis.api = new Api(`ws://${wsHost}/ws`)
+globalThis.api = new Api(wsHost)
