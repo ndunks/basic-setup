@@ -4,9 +4,10 @@
 extern "C"
 {
 #endif
-    #include "esp_console.h"
-    #include "FreeRTOS.h"
-    #include "freertos/task.h"
+#include "esp_console.h"
+#include "argtable3/argtable3.h"
+#include "FreeRTOS.h"
+#include "freertos/task.h"
 
     volatile TaskHandle_t terminal_task_handle;
 

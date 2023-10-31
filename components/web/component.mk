@@ -8,5 +8,5 @@ WEB_SOURCES = $(COMPONENT_PATH)/package.json $(wildcard $(COMPONENT_PATH)/src/*.
 $(COMPONENT_PATH)/include/web-server.h: $(COMPONENT_PATH)/web.bin
 	cd $(COMPONENT_PATH) && node web.js
 
-$(COMPONENT_PATH)/web.bin: $(WEB_SOURCES)
-	cd $(COMPONENT_PATH) && npm run build
+# $(COMPONENT_PATH)/web.bin: $(WEB_SOURCES)
+# 	cd $(COMPONENT_PATH) && npm run build

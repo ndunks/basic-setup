@@ -1,11 +1,8 @@
-#include "esp_console.h"
 #include "driver/gpio.h"
 #include "actuator.h"
-#include "argtable3/argtable3.h"
-#include "FreeRTOS.h"
-#include "freertos/task.h"
 #include "main.h"
 #include "config.h"
+#include "terminal.h"
 #include "web-socket-handler.h"
 
 // GPIO12 -> SHCP (Shift Register Clock Input)

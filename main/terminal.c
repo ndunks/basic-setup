@@ -2,13 +2,9 @@
 #include <string.h>
 #include "esp_system.h"
 #include "esp_log.h"
-#include "esp_console.h"
 #include "esp_vfs_dev.h"
-#include "FreeRTOS.h"
-#include "task.h"
 #include "driver/uart.h"
 #include "linenoise/linenoise.h"
-#include "argtable3/argtable3.h"
 #include "commands.h"
 #include "terminal.h"
 #include "actuator.h"

@@ -37,11 +37,10 @@ PYTHON=python3 make menuconfig
 ## Analog Multiplexer 74hc4051
 
 - ADC0   -> Z
--        -> S0
--        -> S1
--        -> S2
--        -> E
-
+- GPIO4  -> S0
+- GPIO5  -> S1
+- GPIO15 -> S2
+- GPIO16 -> E
 
 
 # Device ID

@@ -7,6 +7,7 @@
 #include "state.h"
 #include "terminal.h"
 #include "actuator.h"
+#include "sensor.h"
 #include "wifi.h"
 #include "config.h"
 #include "web-server.h"
@@ -71,12 +72,13 @@ void app_main()
     ESP_ERROR_CHECK(esp_wifi_init(&init_config));
 
     config_load();
+    actuator_setup(config.switch_values);
+    sensor_setup();
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(app_wifi_start());
 
     web_server_main();
 
-    actuator_setup(config.switch_values);
 
     const esp_console_cmd_t dump_cmd = {
         .command = "dump",
