@@ -76,9 +76,6 @@ void app_main()
 
     web_server_main();
 
-    initialize_terminal();
-
-    // todo: load last state from storage
     actuator_setup(config.switch_values);
 
     const esp_console_cmd_t dump_cmd = {
@@ -89,5 +86,6 @@ void app_main()
         .argtable = NULL};
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(esp_console_cmd_register(&dump_cmd));
-    // xTaskCreate(&broadcast_state, "bcastState", 768, NULL, 2, NULL);
+
+    initialize_terminal();
 }

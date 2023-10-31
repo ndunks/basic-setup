@@ -69,7 +69,6 @@ void initialize_terminal()
     linenoiseHistorySetMaxLen(100);
     /* Register component commands */
     register_commands();
-    actuator_register_command();
     esp_console_register_help_command();
 
     /* Figure out if the terminal supports escape sequences */

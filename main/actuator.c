@@ -17,11 +17,25 @@
 
 #define ACTUATOR_PIN_ENABLE GPIO_NUM_16
 
-// static void on_ws_client(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
-// {
-//     char ws_msg[2] = {WS_MSG_ID_ACTUATOR, config.switch_values};
-//     ws_sendframe_bin(client, ws_msg, 2);
-// }
+static struct
+{
+    struct arg_int *byte;
+    struct arg_end *end;
+} actuator_args;
+
+static int actuator_cmd(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&actuator_args);
+    if (nerrors != 0)
+    {
+        arg_print_errors(stderr, actuator_args.end, argv[0]);
+        return 1;
+    }
+
+    actuator_update(actuator_args.byte->ival[0] & 0xffu);
+    printf("%0x\n", config.switch_values);
+    return 0;
+}
 
 static void on_ws_update(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
@@ -46,57 +60,7 @@ void actuator_setup(unsigned char initial_value)
 
     // web_socket_add_handler(0, &on_ws_client);
     web_socket_add_handler(WS_MSG_ID_ACTUATOR, &on_ws_update);
-}
-
-void actuator_update(unsigned char value)
-{
-
-    for (int8_t i = 7; i >= 0; i--)
-    {
-        // Bit data
-        gpio_set_level(ACTUATOR_PIN_DS, (value >> i) & 1);
-
-        // Clock pulse
-        gpio_set_level(ACTUATOR_PIN_CLOCK, 1);
-        ets_delay_us(1);
-        gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
-        ets_delay_us(1);
-    }
-    // latch
-    gpio_set_level(ACTUATOR_PIN_STCP, 1);
-    ets_delay_us(1);
-    gpio_set_level(ACTUATOR_PIN_STCP, 0);
-    ets_delay_us(1);
-    config.switch_values = value;
-    config_save(NULL);
-
-    // Broadcast to other client
-    const char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
-    ws_sendframe(NULL, ws_msg, 2, WS_FR_OP_BIN);
-}
-
-static struct
-{
-    struct arg_int *byte;
-    struct arg_end *end;
-} actuator_args;
-
-static int actuator_cmd(int argc, char **argv)
-{
-    int nerrors = arg_parse(argc, argv, (void **)&actuator_args);
-    if (nerrors != 0)
-    {
-        arg_print_errors(stderr, actuator_args.end, argv[0]);
-        return 1;
-    }
-
-    actuator_update(actuator_args.byte->ival[0] & 0xffu);
-    printf("%0x\n", config.switch_values);
-    return 0;
-}
-
-void actuator_register_command()
-{
+    // register terminal command
     actuator_args.byte = arg_int0(NULL, NULL, "<n>", "Byte");
     actuator_args.end = arg_end(1);
 
@@ -109,4 +73,32 @@ void actuator_register_command()
     };
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
+}
+
+void actuator_update(unsigned char value)
+{
+    static uint32_t delay = (1);
+
+    for (int8_t i = 7; i >= 0; i--)
+    {
+        // Bit data
+        gpio_set_level(ACTUATOR_PIN_DS, (value >> i) & 1);
+
+        // Clock pulse
+        gpio_set_level(ACTUATOR_PIN_CLOCK, 1);
+        //ets_delay_us(1);
+        gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
+       // ets_delay_us(1);
+    }
+    // latch
+    gpio_set_level(ACTUATOR_PIN_STCP, 1);
+    //ets_delay_us(1);
+    gpio_set_level(ACTUATOR_PIN_STCP, 0);
+    //ets_delay_us(1);
+    config.switch_values = value;
+    config_save(NULL);
+
+    // Broadcast to other client
+    const char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
+    ws_sendframe(NULL, ws_msg, 2, WS_FR_OP_BIN);
 }
