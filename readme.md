@@ -27,15 +27,21 @@ PYTHON=python3 make menuconfig
 
 ## Wiring 
 
-## Shift Register
+## Shift Register 74hc595
 
 - GPIO12 -> SHCP (Shift Register Clock Input)
 - GPIO13 -> DS   (Serial Data Input)
 - GPIO14 -> STCP (Storage Register Clock Input)
+- GPIO16 -> OE
 
-## Analog Multiplexer
+## Analog Multiplexer 74hc4051
 
 - ADC0   -> Z
+-        -> S0
+-        -> S1
+-        -> S2
+-        -> E
+
 
 
 # Device ID

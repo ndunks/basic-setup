@@ -15,6 +15,8 @@
 // GPIO14 -> STCP (Storage Register Clock Input)
 #define ACTUATOR_PIN_STCP GPIO_NUM_14
 
+#define ACTUATOR_PIN_ENABLE GPIO_NUM_16
+
 // static void on_ws_client(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 // {
 //     char ws_msg[2] = {WS_MSG_ID_ACTUATOR, config.switch_values};
@@ -28,11 +30,10 @@ static void on_ws_update(ws_cli_conn_t *client, const unsigned char *msg, uint64
 
 void actuator_setup(unsigned char initial_value)
 {
-
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
-    io_conf.pin_bit_mask = (1 << ACTUATOR_PIN_CLOCK) | (1 << ACTUATOR_PIN_DS) | (1 << ACTUATOR_PIN_STCP);
+    io_conf.pin_bit_mask = (1 << ACTUATOR_PIN_CLOCK) | (1 << ACTUATOR_PIN_DS) | (1 << ACTUATOR_PIN_STCP) | (1 << ACTUATOR_PIN_ENABLE);
     io_conf.pull_down_en = 0;
     io_conf.pull_up_en = 0;
 
@@ -40,7 +41,7 @@ void actuator_setup(unsigned char initial_value)
     gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
     gpio_set_level(ACTUATOR_PIN_DS, 0);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
-    ets_delay_us(1);
+    gpio_set_level(ACTUATOR_PIN_ENABLE, 0);
     actuator_update(initial_value);
 
     // web_socket_add_handler(0, &on_ws_client);
