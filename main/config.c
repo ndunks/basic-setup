@@ -11,7 +11,6 @@
 #include "web-socket-handler.h"
 
 #define TAG "config"
-static const uint16_t APP_CONFIG_VERSION = 1u;
 struct app_config config;
 
 // extern esp_rom_spiflash_chip_t g_rom_flashchip
@@ -112,14 +111,13 @@ static esp_err_t password_check(const char *plain, size_t len)
         return err;
     }
 
-
     err = nvs_get_blob(handle, CONFIG_PWDKEY, &stored_pwd, &stored_len);
     if (err == ESP_OK)
     {
         ESP_LOGI(TAG, "Compare PWD, %u %u %02x%02x%02x%02x %02x%02x%02x%02x",
-                len, stored_len,
-                input_pwd[0], input_pwd[1], input_pwd[2], input_pwd[3],
-                stored_pwd[0], stored_pwd[1], stored_pwd[2], stored_pwd[3]);
+                 len, stored_len,
+                 input_pwd[0], input_pwd[1], input_pwd[2], input_pwd[3],
+                 stored_pwd[0], stored_pwd[1], stored_pwd[2], stored_pwd[3]);
         if (stored_len != sizeof(stored_pwd))
         {
             ESP_LOGW(TAG, "%s: invalid length of pwd (%d)", __func__, stored_len);
@@ -146,7 +144,7 @@ static esp_err_t update_password(const char *plain, size_t len, void *handle)
 
 esp_err_t config_save(void *handle)
 {
-    return nvs_save(handle, CONFIG_NAMEKEY, &config, sizeof(struct app_config));
+    return nvs_save(handle, CONFIG_NAMEKEY, (void *) &config, sizeof(struct app_config));
 }
 
 void config_reset()
@@ -177,6 +175,9 @@ void config_reset()
     config.switch_len = APP_SWITCH_COUNT;
     config.sensor_len = APP_SENSOR_COUNT;
     config.switch_values = 0;
+    config.switch_status = 0xff; // all enabled
+    config.sensor_status = 0xff; // all enabled
+    config.sensor_delay = 1000;
     sprintf(config.hostname, "OSH-%s", device_id);
     for (i = 0; i < APP_SWITCH_COUNT; i++)
     {
@@ -195,13 +196,17 @@ void config_print()
     printf("App Config:\n"
            "\tconfig_version: %u\n"
            "\tswitch_len: %u\n"
-           "\tsensor_len: %u\n"
            "\tswitch_values: %u\n"
+           "\tsensor_len: %u\n"
+           "\tsensor_delay: %u\n"
+           "\tsensor_status: %u\n"
            "\thostname: %s\n",
            config.config_version,
            config.switch_len,
-           config.sensor_len,
            config.switch_values,
+           config.sensor_len,
+           config.sensor_delay,
+           config.sensor_status,
            config.hostname);
 }
 
@@ -360,6 +365,15 @@ esp_err_t config_load()
         config_reset();
         update_password(CONFIG_DEFAULT_PASSWORD, sizeof(CONFIG_DEFAULT_PASSWORD) - 1, &handle);
         config_save(&handle);
+    }
+    else
+    {
+        if (config.sensor_delay < 100)
+        {
+            ESP_LOGW(TAG, "%s: sensor delay too short: %u, resetting it", __func__, config.sensor_delay);
+            config.sensor_delay = 1000;
+            config_save(&handle);
+        }
     }
 
     config_print();

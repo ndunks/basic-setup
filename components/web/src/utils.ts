@@ -23,16 +23,11 @@ export function parseWifiConfigAp(b: Uint8Array): WifiConfigAp {
 export function encodeWifiConfigAp(b: WifiConfigAp): Uint8Array {
     // sizeof(struct wifi_config_ap) = 120
     const writer = Struct.encode(120 - 1) // exclude msgId
-    //writer.writeByte(WS_MSG_ID_WIFI_CONFIG_AP)
-
-
     writer.writeBool(b.isEnabled)
     writer.writeMac(b.mac)
-    //net: {
     writer.writeIpV4(b.net.ip)
     writer.writeIpV4(b.net.netmask)
     writer.writeIpV4(b.net.gw)
-    //},
     writer.writeString(b.ssid, 32)
     writer.writeString(b.password, 64)
     writer.writeBool(b.isStarted)
@@ -65,32 +60,15 @@ export function encodeWifiConfigSta(b: WifiConfigSta): Uint8Array {
 
     writer.writeBool(b.isEnabled)
     writer.writeMac(b.mac)
-    //net: {
     writer.writeIpV4(b.net.ip)
     writer.writeIpV4(b.net.netmask)
     writer.writeIpV4(b.net.gw)
-    //},
+
     writer.writeString(b.ssid, 32)
     writer.writeString(b.password, 64)
     writer.writeBool(b.autoConnect)
     return writer.getBytes()
 }
-/* 
-00000000: 0b
-18a6f730b3a8
-25
-736177616800000000000000000000000000000000000000000000000000000000
-
-c3
-03
-0000 0030 9935  ........... . .0 .5
-00000003: d30a 6868 6f6d 6500 0000 0000 0000 0000  ..hhome.........
-00000004: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-00000005: 0000 0000 bf04 0000 0070 4f57 f75c da52  .........pOW.\.R
-00000006: 554d 4148 5f4b 5500 0000 0000 0000 0000  UMAH_KU.........
-00000007: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-00000008: aa03 0000 00                             .....
- */
 
 export function parseWifiScan(b: Uint8Array) {
     const results: WifiScanResult[] = []
@@ -115,55 +93,33 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
 
     let configVersion: number,
         switchLen: number,
-        sensorLen: number,
-        switchValues: number,
-        hostname: string,
-        switches: string[],
-        sensors: string[];
-    let ofs = 0;
+        sensorLen: number
+    const reader = Struct.decode(b)
 
-    function readStr(maxLen: number) {
-        const str = [...b.slice(ofs, ofs + maxLen)]
-        ofs += maxLen
-        // Check null terminated string
-        let endStr = str.indexOf(0)
-        if (endStr > -1) {
-            str.splice(endStr)
-        }
-        return str.map(v => String.fromCharCode(v)).join('')
-    }
-
-    // From Bigendian, readUint16
-    configVersion = (((b[ofs]) & 0xff) >>> 0) | ((b[ofs + 1] << 8) & 0xff) >>> 0;
-    ofs += 2
-    switchLen = b[ofs++];
-    sensorLen = b[ofs++];
-    switchValues = b[ofs++];
-    // if( configVersion != 1 ){
-    //     console.warn('Unsupported config version', configVersion)
-    //     return null;
-    // }
-    hostname = readStr(TCPIP_HOSTNAME_MAX_SIZE)
-    switches = [...new Array(switchLen)].map((_, i) => {
-        return readStr(APP_NAME_MAX_SIZE)
-    })
-    sensors = [...new Array(sensorLen)].map((_, i) => {
-        return readStr(APP_NAME_MAX_SIZE)
-    })
-
+    configVersion = reader.readUInt16()
+    switchLen = reader.readByte()
+    sensorLen = reader.readByte()
     const cfg: AppConfig = {
         configVersion,
         switchLen,
         sensorLen,
-        switchValues,
-        hostname,
-        switches,
-        sensors,
+        switchValues: reader.readByte(),
+        switchStatus: reader.readByte(),
+        sensorStatus: reader.readByte(),
+        reserved1: reader.readByte(),
+        sensor_delay: reader.readUInt16(),
+        reserved2: reader.readUInt16(),
+        hostname: reader.readString(TCPIP_HOSTNAME_MAX_SIZE),
+        switches: [...new Array(switchLen)].map((_, i) => {
+            return reader.readString(APP_NAME_MAX_SIZE)
+        }),
+        sensors: [...new Array(sensorLen)].map((_, i) => {
+            return reader.readString(APP_NAME_MAX_SIZE)
+        }),
     }
     console.debug(cfg)
     return cfg
 }
-
 
 export function bitsOnToArray(byte: number): number[] {
     const actives = []

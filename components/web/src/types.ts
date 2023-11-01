@@ -25,6 +25,16 @@ export interface AppConfig {
     sensorLen: number
     /** uint8_t */
     switchValues: number
+    /** uint8_t */
+    switchStatus: number
+    /** uint8_t */
+    sensorStatus: number
+    /** uint8_t */
+    reserved1: number
+    /** uint16_t */
+    sensor_delay: number
+    /** uint16_t */
+    reserved2: number
     /** char[32]  */
     hostname: string
     /** char[][28] Switch name */

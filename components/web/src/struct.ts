@@ -52,14 +52,21 @@ export default class Struct {
         console.warn(`Unknown enum value ${value}`)
     }
 
-    readUInt32() {
+    readUInt16(){
         let num = 0;
-        num |= this.bytes[this.pos++] >>> 24 & 0xff
-        num |= this.bytes[this.pos++] >>> 16 & 0xff
-        num |= this.bytes[this.pos++] >>> 8 & 0xff
-        num |= this.bytes[this.pos++] >>> 0 & 0xff
+        num |= ((this.bytes[this.pos++] & 0xff )<< 0) >>> 0
+        num |= ((this.bytes[this.pos++] & 0xff )<< 8) >>> 0
         return num
     }
+
+    // readUInt32() {
+    //     let num = 0;
+    //     num |= this.bytes[this.pos++] >>> 24 & 0xff
+    //     num |= this.bytes[this.pos++] >>> 16 & 0xff
+    //     num |= this.bytes[this.pos++] >>> 8 & 0xff
+    //     num |= this.bytes[this.pos++] >>> 0 & 0xff
+    //     return num
+    // }
 
     writeByte(v: number) {
         this.bytes[this.pos++] = v

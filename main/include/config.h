@@ -4,18 +4,34 @@
 #include "tcpip_adapter.h"
 // Only support for 8
 #define APP_SWITCH_COUNT 8
-#define APP_SENSOR_COUNT 0
-#define APP_NAME_MAX_SIZE 28
+#define APP_SENSOR_COUNT 8
+#define APP_NAME_MAX_SIZE 24
 #define APP_PASSWORD_MAX_SIZE 128
+/** uint16_t */
+#define APP_CONFIG_VERSION 2
 extern const char *APP_NVS_NAMESPACE;
+// 4 byte aligned
 struct app_config
 {
     uint16_t config_version;
     uint8_t switch_len;
     uint8_t sensor_len;
+    /** Digital value in bits, 1: on, 0: off*/
     uint8_t switch_values; // APP_SWITCH_COUNT / 8
+    /** Switch status (enable/disabled) */
+    uint8_t switch_status; // APP_SWITCH_COUNT / 8
+    /** Sensor status (enable/disabled) */
+    uint8_t sensor_status; // APP_SENSOR_COUNT / 8
+    /** reserved 1*/
+    uint8_t reserved1; // aligned
+    /** delay in ms: min is 100 */
+    uint16_t sensor_delay; // APP_SENSOR_COUNT / 8
+    /** reserved 2*/
+    uint16_t reserved2; // aligned
     char hostname[TCPIP_HOSTNAME_MAX_SIZE];
+    /** Switches names */
     char switches[APP_SWITCH_COUNT][APP_NAME_MAX_SIZE];
+    /** Sensor names */
     char sensors[APP_SENSOR_COUNT][APP_NAME_MAX_SIZE];
 };
 

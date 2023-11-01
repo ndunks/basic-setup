@@ -30,12 +30,19 @@ export class Api {
         STA_FAIL: false,
     })
 
-    // Actuator option: 1,2,3,4,5,6,7,8
-    public switchNames = shallowRef([] as string[]);
-    public switchActives = shallowRef([] as number[])
-    // public sensorNames = shallowRef([] as string[]);
-    // public sensorValues = shallowRef([] as number[]);
-    public hostname = shallowRef("...");
+    public switch = shallowRef({
+        names: [] as string[],
+        // Enable / disable
+        status: [] as number[]
+    })
+    public sensor = shallowRef({
+        names: [] as string[],
+        // Enable / disable
+        status: [] as number[]
+    })
+    public switchActives = shallowRef([] as (number | null)[])
+    public sensorValues = shallowRef([] as (number | null)[])
+    public hostname = shallowRef("Loading..");
 
     private ws: WebSocket
     //private appConfig = shallowRef<AppConfig | null>(null)
@@ -51,8 +58,8 @@ export class Api {
             this.isLoading.value = !!v
             console.debug(`Waiting stack`, v)
         })
-        
-        watch( this.status, status => {
+
+        watch(this.status, status => {
             this.isConnected.value = status == ApiStatus.CONNECTED
         })
 
@@ -204,19 +211,41 @@ export class Api {
             console.debug('WS Connected')
         }
         this.hostname.value = config.hostname
-        this.switchNames.value = config.switches
+        this.switch.value = {
+            names: config.switches,
+            status: bitsOnToArray(config.switchStatus)
+        }
         this.switchActives.value = bitsOnToArray(config.switchValues)
 
+        this.sensor.value = {
+            names: config.sensors,
+            status: bitsOnToArray(config.sensorStatus),
+        }
+        this.sensorValues.value = config.sensors.map(() => null)
         this.autoReconnectBackoff = 2
+
         if (!this.isLogin.value) {
             this.autoLogin()
         }
     }
 
-    private wsActuatorUpdate(byte: number) {
+    private wsOnSwitchUpdate(byte: number) {
         this.switchActives.value = bitsOnToArray(byte)
         this.actuatorPendingUpdate.value = 0
         console.debug('WS ACTUATOR UPDATE', this.switchActives.value)
+    }
+    
+    private wsOnSensorUpdate(b: Uint8Array) {
+        const len = b[0]
+        const values: number[] = []
+        let v = 0
+        for (let i = 0; i < len; i++) {
+            v = 0
+            v |= ((b[1 + (i * 2) + 0] & 0xff) << 0) >>> 0
+            v |= ((b[1 + (i * 2) + 1] & 0xff) << 8) >>> 0
+            values.push(v)
+        }
+        this.sensorValues.value = values
     }
 
     private onGotBinaryMessage(msg: Uint8Array) {
@@ -228,7 +257,9 @@ export class Api {
 
         switch (code) {
             case WS_MSG_ID_ACTUATOR:
-                return this.wsActuatorUpdate(msg[1])
+                return this.wsOnSwitchUpdate(msg[1])
+            case WS_MSG_ID_SENSOR:
+                return this.wsOnSensorUpdate(msg.slice(1))
             case WS_MSG_ID_CONFIG:
                 return this.updateAppConfig(msg.slice(1))
         }

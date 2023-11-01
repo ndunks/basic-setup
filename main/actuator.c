@@ -74,7 +74,7 @@ void actuator_setup(unsigned char initial_value)
 
 void actuator_update(unsigned char value)
 {
-    static uint32_t delay = (1);
+    // static uint32_t delay = (1);
 
     for (int8_t i = 7; i >= 0; i--)
     {

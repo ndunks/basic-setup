@@ -9,6 +9,7 @@ import ConfigPassword from "./views/ConfigPassword.vue";
 import ConfigWifiSta from "./views/ConfigWifiSta.vue";
 import { watch } from "vue";
 import ConfigWifiAp from "./views/ConfigWifiAp.vue";
+import Sensors from "./views/Sensors.vue";
 
 const settingDialog = ref(null)
 const connectDialog = ref(true)
@@ -85,8 +86,11 @@ function clickRestart() {
     <v-main>
       <v-container fluid class="fill-height">
         <v-row justify="center" no-gutters>
-          <v-col xl="4" lg="5" md="6" cols="12">
+          <v-col xl="4" lg="5" cols="6">
             <Switches />
+          </v-col>
+          <v-col xl="4" lg="5" cols="6">
+            <Sensors />
           </v-col>
         </v-row>
       </v-container>
