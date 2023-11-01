@@ -4,19 +4,26 @@ import { mdiLightbulb, mdiLightbulbOn } from '@mdi/js'
 
 <template>
     <v-card class="mx-auto" max-width="300" title="Sensors">
-        <v-item-group multiple v-if="api.isConnected">
-            <v-item v-for="(v,i) of api.sensor.value.names" :key="i" :value="i">
-                <v-list-item>
-                    <!-- <template #prepend="{ isActive }">
+        <v-list lines="two">
+
+
+            <v-list-item v-for="(v, i) of api.sensor.value.names" :key="i">
+                <!-- <template #prepend="{ isActive }">
                         <v-switch color="success" class="me-4" :model-value="isActive" hide-details
                             density="comfortable"></v-switch>
                     </template> -->
-                    <v-list-item-title>{{ v }}</v-list-item-title>
-                    <template #append="{ isActive }">
+                <v-list-item-title>
+                    {{ v }}
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                    <v-progress-linear color="primary" :max="1023" :model-value="api.sensorValues.value[i]" />
+                </v-list-item-subtitle>
+                <template #append="{ isActive }">
+                    <v-chip>
                         {{ api.sensorValues.value[i] }}
-                    </template>
-                </v-list-item>
-            </v-item>
-        </v-item-group>
+                    </v-chip>
+                </template>
+            </v-list-item>
+        </v-list>
     </v-card>
 </template>
