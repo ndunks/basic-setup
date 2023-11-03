@@ -14,7 +14,7 @@ static struct
 {
     char msgId;
     char len; // also for padding
-    uint16_t values[APP_SENSOR_COUNT];
+    uint8_t values[APP_SENSOR_COUNT];
 } sensor_msg = {
     .msgId = WS_MSG_ID_SENSOR,
     .len = APP_SENSOR_COUNT & 0xff,
@@ -28,18 +28,20 @@ static struct
 
 static void read_sensors()
 {
+    uint16_t value;
     for (;;)
     {
         for (int i = 0; i < APP_SENSOR_COUNT; i++)
         {
             // skip if disabled
-            if ((config.sensor_status & (1 << i)) == 0)
+            if ((config.sensor_cfg[i] & 0x80) == 0)
                 continue;
             gpio_set_level(SENSOR_PIN_S0, (i & 0b001) > 0);
             gpio_set_level(SENSOR_PIN_S1, (i & 0b010) > 0);
             gpio_set_level(SENSOR_PIN_S2, (i & 0b100) > 0);
             // vTaskDelay(1000 / portTICK_PERIOD_MS);
-            adc_read(&sensor_msg.values[i]);
+            adc_read(&value);
+            sensor_msg.values[i] = value / 4;
         }
         vTaskDelay(config.sensor_delay / portTICK_PERIOD_MS);
         // broadcast to all connected ws client
@@ -60,7 +62,7 @@ static int sensor_cmd(int argc, char **argv)
     for (int i = 0; i < APP_SENSOR_COUNT; i++)
     {
         // skip if disabled
-        if ((config.sensor_status & ((1 << i) & 0xff)) == 0)
+        if ((config.sensor_cfg[i] & 0x80) == 0)
             continue;
         printf("\t%d: %u\n", i, sensor_msg.values[i]);
     }

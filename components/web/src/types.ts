@@ -2,7 +2,12 @@
 export enum ApiStatus {
     DISCONNECTED, CONNECTED, CONNECTIING
 }
-
+export enum SwitchType {
+    SWITCH = 1, PUSH
+}
+export enum SensorType {
+    BAR = 1, CIRCLE
+}
 /**
 struct app_config
 {
@@ -26,9 +31,9 @@ export interface AppConfig {
     /** uint8_t */
     switchValues: number
     /** uint8_t */
-    switchStatus: number
+    switchCfg: {status: boolean, type: SwitchType}[]
     /** uint8_t */
-    sensorStatus: number
+    sensorCfg: {status: boolean, type: SensorType}[]
     /** uint8_t */
     reserved1: number
     /** uint16_t */

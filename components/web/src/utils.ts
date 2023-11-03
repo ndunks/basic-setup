@@ -1,5 +1,5 @@
 import Struct from "./struct";
-import { type AppConfig, type WifiConfigAp, type WifiConfigSta, WifiMode, WifiAuthMode, type IpInfo, type WifiScanResult } from "./types";
+import { type AppConfig, type WifiConfigAp, type WifiConfigSta, WifiMode, WifiAuthMode, type IpInfo, type WifiScanResult, SensorType, SwitchType } from "./types";
 
 export function parseWifiConfigAp(b: Uint8Array): WifiConfigAp {
     const reader = Struct.decode(b)
@@ -104,8 +104,12 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
         switchLen,
         sensorLen,
         switchValues: reader.readByte(),
-        switchStatus: reader.readByte(),
-        sensorStatus: reader.readByte(),
+        switchCfg: [...new Array(switchLen)].map((_, i) => {
+            return parseSensorSwitchCfg(reader.readByte(), SwitchType)
+        }),
+        sensorCfg:  [...new Array(sensorLen)].map((_, i) => {
+            return parseSensorSwitchCfg(reader.readByte(), SensorType)
+        }),
         reserved1: reader.readByte(),
         sensor_delay: reader.readUInt16(),
         reserved2: reader.readUInt16(),
@@ -121,7 +125,21 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
     return cfg
 }
 
-export function bitsOnToArray(byte: number): number[] {
+export function parseSensorSwitchCfg<T extends typeof SensorType | typeof SwitchType>(
+    byte: number, t: T) {
+    const status = (byte & 0x80) == 0x80
+    let type: T[keyof T] = t[t[0]]
+    const enumVal = byte & 0x7f
+    const x = SwitchType[0]
+    if (enumVal in t)
+        type = enumVal as unknown as T[keyof T]
+    return {
+        status, type
+    }
+}
+
+// Create array contain index of active bytes
+export function bitsFilterOn(byte: number): number[] {
     const actives = []
     for (let i = 0; i < 8; i++) {
         if (byte & 1 << i)
@@ -130,6 +148,6 @@ export function bitsOnToArray(byte: number): number[] {
     return actives
 }
 
-export function bitsArraytoByte(values: number[]): number {
+export function bitsFilterArraytoByte(values: number[]): number {
     return values.reduce((c, v, i) => c | (1 << v) >>> 0, 0)
 }

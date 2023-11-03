@@ -22,7 +22,8 @@ function toggleDrawer() {
 const menus = [
   { text: "Wifi Connection", icon: mdiWifiSettings, view: ConfigWifiSta },
   { text: "SoftAP Broadcast", icon: mdiAccessPoint, view: ConfigWifiAp },
-  { text: "Switches", icon: mdiDipSwitch, view: ConfigSwitches },
+  { text: "Switch Config", icon: mdiDipSwitch, view: ConfigSwitches },
+  //{ text: "Sensor Config", icon: mdiDipSwitch, view: ConfigSensors },
   { text: "Password", icon: mdiKey, view: ConfigPassword },
   { text: "Settings", icon: mdiCog, view: ConfigGeneral },
 ]
@@ -34,6 +35,12 @@ function clickSettings(i: number) {
   drawer.value = false
   settingDialog.value = true
 }
+
+function onEdit(what: 'sensor' | 'switch') {
+  currentSettingView = what == 'sensor' ? ConfigSwitches : ConfigSwitches
+  settingDialog.value = true
+}
+
 watch(api.isConnected, (isConnected) => {
   connectDialog.value = !isConnected
 })
@@ -87,10 +94,10 @@ function clickRestart() {
       <v-container fluid class="fill-height">
         <v-row justify="center" no-gutters>
           <v-col xl="4" lg="5" cols="6">
-            <Switches />
+            <Switches @edit="onEdit('switch')" />
           </v-col>
           <v-col xl="4" lg="5" cols="6">
-            <Sensors />
+            <Sensors @edit="onEdit('sensor')" />
           </v-col>
         </v-row>
       </v-container>

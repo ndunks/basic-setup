@@ -1,8 +1,8 @@
 import type { Ref } from "vue";
 import { shallowRef } from "vue";
 import { ref } from "vue";
-import { ApiStatus } from "./types";
-import { bitsArraytoByte, bitsOnToArray, parseAppConfigStruct } from "./utils";
+import { ApiStatus, SensorType, SwitchType } from "./types";
+import { bitsFilterArraytoByte, bitsFilterOn, parseAppConfigStruct } from "./utils";
 import { watch } from "vue";
 import { reactive } from "vue";
 
@@ -33,12 +33,14 @@ export class Api {
     public switch = shallowRef({
         names: [] as string[],
         // Enable / disable
-        status: [] as number[]
+        status: [] as boolean[],
+        types: [] as SwitchType[]
     })
     public sensor = shallowRef({
         names: [] as string[],
         // Enable / disable
-        status: [] as number[]
+        status: [] as boolean[],
+        types: [] as SensorType[]
     })
     public switchActives = shallowRef([] as (number | null)[])
     public sensorValues = shallowRef([] as (number | null)[])
@@ -89,8 +91,8 @@ export class Api {
 
     // Index of active switch
     updateActuator = (values: number[]) => {
-        const byte = bitsArraytoByte(values)
-        this.actuatorPendingUpdate.value = byte ^ bitsArraytoByte(this.switchActives.value)
+        const byte = bitsFilterArraytoByte(values)
+        this.actuatorPendingUpdate.value = byte ^ bitsFilterArraytoByte(this.switchActives.value)
 
         const uint8Array = new Uint8Array([0x01, byte])
         console.debug('REQ ACTUATOR UPDATE', values)
@@ -118,15 +120,21 @@ export class Api {
         return Promise.resolve(false)
     }
 
-    updateSwitchNames(names: string[]) {
-        const invalids = names.filter(v => v.length > APP_NAME_MAX_SIZE)
+    updateSwitchConfig(items: { name: string, type: SwitchType, status: boolean }[]) {
+        const invalids = items.filter(v => v.name.length > APP_NAME_MAX_SIZE)
 
         if (invalids.length)
             return Promise.reject(`Max name length is ${APP_NAME_MAX_SIZE}`)
+        let x = []
+        const req = new Uint8Array(
+            [...items.flatMap(({ name }) => {
+                return name.padEnd(APP_NAME_MAX_SIZE, "\x00").split('').map(s => s.charCodeAt(0))
+            }),
+            ...items.map(({ status, type }) => ((status ? 1 : 0) << 7) | type & 0x7f)
+            ]
+        )
 
-        return this.requestTruthy(WS_MSG_ID_UPDATE_SWITCHES, names.map(
-            v => v.padEnd(APP_NAME_MAX_SIZE, "\x00")
-        ).join(""))
+        return this.requestTruthy(WS_MSG_ID_UPDATE_SWITCHES, req)
     }
 
     logout() {
@@ -150,7 +158,7 @@ export class Api {
     }
 
     // Throw error on false
-    requestTruthy(code: number, payload: string, errMsg = "Failed") {
+    requestTruthy(code: number, payload: string | Uint8Array, errMsg = "Failed") {
         return this.request(code, payload).then(
             res => {
                 if (res[0] === 1) {
@@ -213,13 +221,15 @@ export class Api {
         this.hostname.value = config.hostname
         this.switch.value = {
             names: config.switches,
-            status: bitsOnToArray(config.switchStatus)
+            status: config.switchCfg.map(v => v.status),
+            types: config.switchCfg.map(v => v.type),
         }
-        this.switchActives.value = bitsOnToArray(config.switchValues)
+        this.switchActives.value = bitsFilterOn(config.switchValues)
 
         this.sensor.value = {
             names: config.sensors,
-            status: bitsOnToArray(config.sensorStatus),
+            status: config.sensorCfg.map(v => v.status),
+            types: config.sensorCfg.map(v => v.type),
         }
         this.sensorValues.value = config.sensors.map(() => null)
         this.autoReconnectBackoff = 2
@@ -230,19 +240,18 @@ export class Api {
     }
 
     private wsOnSwitchUpdate(byte: number) {
-        this.switchActives.value = bitsOnToArray(byte)
+        this.switchActives.value = bitsFilterOn(byte)
         this.actuatorPendingUpdate.value = 0
         console.debug('WS ACTUATOR UPDATE', this.switchActives.value)
     }
-    
+
     private wsOnSensorUpdate(b: Uint8Array) {
         const len = b[0]
         const values: number[] = []
         let v = 0
         for (let i = 0; i < len; i++) {
-            v = 0
-            v |= ((b[1 + (i * 2) + 0] & 0xff) << 0) >>> 0
-            v |= ((b[1 + (i * 2) + 1] & 0xff) << 8) >>> 0
+            v = b[i + 1] << 0 >>> 0
+            v = Math.round(v / 2.55)
             values.push(v)
         }
         this.sensorValues.value = values

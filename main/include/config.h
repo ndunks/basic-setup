@@ -7,6 +7,10 @@
 #define APP_SENSOR_COUNT 8
 #define APP_NAME_MAX_SIZE 24
 #define APP_PASSWORD_MAX_SIZE 128
+#define BUTTON_TYPE_SWITCH 1
+#define BUTTON_TYPE_PUSH 2
+#define SENSOR_TYPE_BAR 1
+#define SENSOR_TYPE_CIRCLE 2
 /** uint16_t */
 #define APP_CONFIG_VERSION 2
 extern const char *APP_NVS_NAMESPACE;
@@ -18,10 +22,10 @@ struct app_config
     uint8_t sensor_len;
     /** Digital value in bits, 1: on, 0: off*/
     uint8_t switch_values; // APP_SWITCH_COUNT / 8
-    /** Switch status (enable/disabled) */
-    uint8_t switch_status; // APP_SWITCH_COUNT / 8
-    /** Sensor status (enable/disabled) */
-    uint8_t sensor_status; // APP_SENSOR_COUNT / 8
+    /** Switch status (msb: enable/disabled, type) */
+    uint8_t switch_cfg[APP_SWITCH_COUNT];
+    /** Sensor status (msb: enable/disabled, type) */
+    uint8_t sensor_cfg[APP_SENSOR_COUNT];
     /** reserved 1*/
     uint8_t reserved1; // aligned
     /** delay in ms: min is 100 */

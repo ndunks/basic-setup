@@ -144,7 +144,7 @@ static esp_err_t update_password(const char *plain, size_t len, void *handle)
 
 esp_err_t config_save(void *handle)
 {
-    return nvs_save(handle, CONFIG_NAMEKEY, (void *) &config, sizeof(struct app_config));
+    return nvs_save(handle, CONFIG_NAMEKEY, (void *)&config, sizeof(struct app_config));
 }
 
 void config_reset()
@@ -175,8 +175,10 @@ void config_reset()
     config.switch_len = APP_SWITCH_COUNT;
     config.sensor_len = APP_SENSOR_COUNT;
     config.switch_values = 0;
-    config.switch_status = 0xff; // all enabled
-    config.sensor_status = 0xff; // all enabled
+    // All enabled, type = switch
+    memset(config.switch_cfg, 1 << 7 | BUTTON_TYPE_SWITCH, APP_SWITCH_COUNT);
+    // All enabled, type = bar
+    memset(config.sensor_cfg, 1 << 7 | SENSOR_TYPE_BAR, APP_SENSOR_COUNT);
     config.sensor_delay = 1000;
     sprintf(config.hostname, "OSH-%s", device_id);
     for (i = 0; i < APP_SWITCH_COUNT; i++)
@@ -199,14 +201,12 @@ void config_print()
            "\tswitch_values: %u\n"
            "\tsensor_len: %u\n"
            "\tsensor_delay: %u\n"
-           "\tsensor_status: %u\n"
            "\thostname: %s\n",
            config.config_version,
            config.switch_len,
            config.switch_values,
            config.sensor_len,
            config.sensor_delay,
-           config.sensor_status,
            config.hostname);
 }
 
@@ -284,10 +284,13 @@ static void on_ws_update_password(ws_cli_conn_t *client, const unsigned char *ms
 static void on_ws_update_switches(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
     char ws_msg[2] = {WS_MSG_ID_UPDATE_SWITCHES, false};
-    ssize_t expectedLen = sizeof(config.switches);
+    ssize_t expectedLen = sizeof(config.switches) + APP_SWITCH_COUNT;
     if (size == expectedLen)
     {
-        memcpy(config.switches, msg, size);
+        memcpy(config.switches, msg, sizeof(config.switches));
+        // set status and type
+        memcpy(config.switch_cfg, msg + sizeof(config.switches), APP_SWITCH_COUNT);
+
         if (config_save(NULL) == ESP_OK)
         {
             ws_msg[1] = true;

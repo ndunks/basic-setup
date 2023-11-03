@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { mdiLightbulb, mdiLightbulbOn } from '@mdi/js'
+import { mdiPencil } from '@mdi/js'
+defineEmits<{ (event: 'edit') }>()
 </script>
 
 <template>
     <v-card class="mx-auto" max-width="300" title="Sensors">
+        <template #append v-if="api.isLogin.value">
+            <v-btn @click="$emit('edit')" class="text-warning" title="Edit" size="sm" :icon="mdiPencil" />
+        </template>
         <v-list lines="two">
 
 
@@ -16,9 +20,9 @@ import { mdiLightbulb, mdiLightbulbOn } from '@mdi/js'
                     {{ v }}
                 </v-list-item-title>
                 <v-list-item-subtitle>
-                    <v-progress-linear color="primary" :max="1023" :model-value="api.sensorValues.value[i]" />
+                    <v-progress-linear color="primary" :model-value="api.sensorValues.value[i]" />
                 </v-list-item-subtitle>
-                <template #append="{ isActive }">
+                <template #append>
                     <v-chip>
                         {{ api.sensorValues.value[i] }}
                     </v-chip>
