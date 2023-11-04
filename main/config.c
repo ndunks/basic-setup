@@ -304,6 +304,29 @@ static void on_ws_update_switches(ws_cli_conn_t *client, const unsigned char *ms
     if (ws_msg[1] == true)
         on_ws_client(NULL, NULL, 0, WS_FR_OP_BIN);
 }
+static void on_ws_update_sensors(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    char ws_msg[2] = {WS_MSG_ID_UPDATE_SENSORS, false};
+    ssize_t expectedLen = sizeof(config.sensors) + APP_SENSOR_COUNT;
+    if (size == expectedLen)
+    {
+        memcpy(config.sensors, msg, sizeof(config.sensors));
+        // set status and type
+        memcpy(config.sensor_cfg, msg + sizeof(config.sensors), APP_SENSOR_COUNT);
+
+        if (config_save(NULL) == ESP_OK)
+        {
+            ws_msg[1] = true;
+        }
+    }
+
+    // Send reply to specific client
+    ws_sendframe_bin(client, ws_msg, 2);
+
+    // Broadcast update config
+    if (ws_msg[1] == true)
+        on_ws_client(NULL, NULL, 0, WS_FR_OP_BIN);
+}
 
 static void on_ws_logout(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
@@ -396,6 +419,7 @@ esp_err_t config_load()
     web_socket_add_handler_auth(WS_MSG_ID_LOGOUT, &on_ws_logout, true);
     web_socket_add_handler_auth(WS_MSG_ID_UPDATE_HOSTNAME, &on_ws_update_hostname, true);
     web_socket_add_handler_auth(WS_MSG_ID_UPDATE_SWITCHES, &on_ws_update_switches, true);
+    web_socket_add_handler_auth(WS_MSG_ID_UPDATE_SENSORS, &on_ws_update_sensors, true);
     web_socket_add_handler_auth(WS_MSG_ID_UPDATE_PASSWORD, &on_ws_update_password, true);
     web_socket_add_handler_auth(WS_MSG_ID_RESET_CONFIG, &on_ws_reset_config, true);
     web_socket_add_handler_auth(WS_MSG_ID_RESTART, &on_ws_restart, true);

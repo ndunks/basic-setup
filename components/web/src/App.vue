@@ -10,6 +10,7 @@ import ConfigWifiSta from "./views/ConfigWifiSta.vue";
 import { watch } from "vue";
 import ConfigWifiAp from "./views/ConfigWifiAp.vue";
 import Sensors from "./views/Sensors.vue";
+import ConfigSensors from "./views/ConfigSensors.vue";
 
 const settingDialog = ref(null)
 const connectDialog = ref(true)
@@ -22,7 +23,7 @@ function toggleDrawer() {
 const menus = [
   { text: "Wifi Connection", icon: mdiWifiSettings, view: ConfigWifiSta },
   { text: "SoftAP Broadcast", icon: mdiAccessPoint, view: ConfigWifiAp },
-  { text: "Switch Config", icon: mdiDipSwitch, view: ConfigSwitches },
+  //{ text: "Switch Config", icon: mdiDipSwitch, view: ConfigSwitches },
   //{ text: "Sensor Config", icon: mdiDipSwitch, view: ConfigSensors },
   { text: "Password", icon: mdiKey, view: ConfigPassword },
   { text: "Settings", icon: mdiCog, view: ConfigGeneral },
@@ -37,7 +38,7 @@ function clickSettings(i: number) {
 }
 
 function onEdit(what: 'sensor' | 'switch') {
-  currentSettingView = what == 'sensor' ? ConfigSwitches : ConfigSwitches
+  currentSettingView = what == 'sensor' ? ConfigSensors : ConfigSwitches
   settingDialog.value = true
 }
 

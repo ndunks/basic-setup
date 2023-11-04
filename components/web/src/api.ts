@@ -120,7 +120,7 @@ export class Api {
         return Promise.resolve(false)
     }
 
-    updateSwitchConfig(items: { name: string, type: SwitchType, status: boolean }[]) {
+    updateSwitchSensorConfig(items: { name: string, type: number, status: boolean }[], msgId: number = WS_MSG_ID_UPDATE_SWITCHES) {
         const invalids = items.filter(v => v.name.length > APP_NAME_MAX_SIZE)
 
         if (invalids.length)
@@ -134,7 +134,7 @@ export class Api {
             ]
         )
 
-        return this.requestTruthy(WS_MSG_ID_UPDATE_SWITCHES, req)
+        return this.requestTruthy(msgId, req)
     }
 
     logout() {

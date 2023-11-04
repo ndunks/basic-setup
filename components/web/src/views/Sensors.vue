@@ -6,16 +6,10 @@ defineEmits<{ (event: 'edit') }>()
 <template>
     <v-card class="mx-auto" max-width="300" title="Sensors">
         <template #append v-if="api.isLogin.value">
-            <v-btn @click="$emit('edit')" class="text-warning" title="Edit" size="sm" :icon="mdiPencil" />
+            <v-btn variant="plain" @click="$emit('edit')" class="text-warning" title="Edit" size="sm" :icon="mdiPencil" />
         </template>
         <v-list lines="two">
-
-
             <v-list-item v-for="(v, i) of api.sensor.value.names" :key="i">
-                <!-- <template #prepend="{ isActive }">
-                        <v-switch color="success" class="me-4" :model-value="isActive" hide-details
-                            density="comfortable"></v-switch>
-                    </template> -->
                 <v-list-item-title>
                     {{ v }}
                 </v-list-item-title>

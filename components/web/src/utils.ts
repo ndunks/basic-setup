@@ -1,6 +1,14 @@
 import Struct from "./struct";
 import { type AppConfig, type WifiConfigAp, type WifiConfigSta, WifiMode, WifiAuthMode, type IpInfo, type WifiScanResult, SensorType, SwitchType } from "./types";
 
+export function validateName(v) {
+    if (!v)
+        return 'Name required'
+    if (v.length > APP_NAME_MAX_SIZE)
+        return `Max is ${APP_NAME_MAX_SIZE} character`
+    return true
+}
+
 export function parseWifiConfigAp(b: Uint8Array): WifiConfigAp {
     const reader = Struct.decode(b)
     const cfg: WifiConfigAp = {
@@ -107,7 +115,7 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
         switchCfg: [...new Array(switchLen)].map((_, i) => {
             return parseSensorSwitchCfg(reader.readByte(), SwitchType)
         }),
-        sensorCfg:  [...new Array(sensorLen)].map((_, i) => {
+        sensorCfg: [...new Array(sensorLen)].map((_, i) => {
             return parseSensorSwitchCfg(reader.readByte(), SensorType)
         }),
         reserved1: reader.readByte(),

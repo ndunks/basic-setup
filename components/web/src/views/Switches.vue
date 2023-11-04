@@ -6,7 +6,7 @@ defineEmits<{(event: 'edit')}>()
 <template>
     <v-card class="mx-auto" max-width="300" title="Switches">
         <template #append v-if="api.isLogin.value">
-            <v-btn @click="$emit('edit')" class="text-warning" title="Edit" size="sm" :icon="mdiPencil"/>
+            <v-btn variant="plain" @click="$emit('edit')" class="text-warning" title="Edit" size="sm" :icon="mdiPencil"/>
         </template>
         <v-item-group multiple v-if="api.isConnected" :model-value="api.switchActives.value" @update:model-value="api.updateActuator">
             <v-item v-for="(v,i) of api.switch.value.names" :key="i" :value="i" v-slot="{ isSelected, toggle }">
