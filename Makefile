@@ -56,3 +56,6 @@ wear_levelling \
 wifi_provisioning \
 
 include $(IDF_PATH)/make/project.mk
+
+web:
+	cd $(PROJECT_PATH)/components/web && npm run build && node web.js
