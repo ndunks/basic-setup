@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKey, mdiRestart, mdiAccessPoint, mdiWifiSettings } from '@mdi/js'
-import Switches from "./views/Switches.vue";
+import { mdiCog, mdiLock, mdiExitToApp, mdiDipSwitch, mdiKey, mdiRestart, mdiAccessPoint, mdiWifiSettings, mdiLeak, mdiHomeLightbulb } from '@mdi/js'
 import ConfigGeneral from "./views/ConfigGeneral.vue";
 import ConfigSwitches from "./views/ConfigSwitches.vue";
 import Login from "./views/Login.vue";
@@ -9,8 +8,8 @@ import ConfigPassword from "./views/ConfigPassword.vue";
 import ConfigWifiSta from "./views/ConfigWifiSta.vue";
 import { watch } from "vue";
 import ConfigWifiAp from "./views/ConfigWifiAp.vue";
-import Sensors from "./views/Sensors.vue";
 import ConfigSensors from "./views/ConfigSensors.vue";
+import Dashboard from "./views/Dashboard.vue";
 
 const settingDialog = ref(null)
 const connectDialog = ref(true)
@@ -23,8 +22,8 @@ function toggleDrawer() {
 const menus = [
   { text: "Wifi Connection", icon: mdiWifiSettings, view: ConfigWifiSta },
   { text: "SoftAP Broadcast", icon: mdiAccessPoint, view: ConfigWifiAp },
-  //{ text: "Switch Config", icon: mdiDipSwitch, view: ConfigSwitches },
-  //{ text: "Sensor Config", icon: mdiDipSwitch, view: ConfigSensors },
+  { text: "Switch Config", icon: mdiDipSwitch, view: ConfigSwitches },
+  { text: "Sensor Config", icon: mdiLeak, view: ConfigSensors },
   { text: "Password", icon: mdiKey, view: ConfigPassword },
   { text: "Settings", icon: mdiCog, view: ConfigGeneral },
 ]
@@ -72,7 +71,7 @@ function clickRestart() {
 <template>
   <v-app>
     <v-app-bar density="compact">
-      <v-app-bar-nav-icon @click="toggleDrawer"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon :icon="mdiHomeLightbulb" @click="toggleDrawer"></v-app-bar-nav-icon>
       <v-app-bar-title v-text="api.hostname.value" />
     </v-app-bar>
     <v-navigation-drawer v-model="drawer">
@@ -92,15 +91,8 @@ function clickRestart() {
       </v-list>
     </v-navigation-drawer>
     <v-main>
-      <v-container fluid class="fill-height">
-        <v-row justify="center" no-gutters>
-          <v-col xl="4" lg="5" cols="6">
-            <Switches @edit="onEdit('switch')" />
-          </v-col>
-          <v-col xl="4" lg="5" cols="6">
-            <Sensors @edit="onEdit('sensor')" />
-          </v-col>
-        </v-row>
+      <v-container class="fill-height">
+        <Dashboard/>
       </v-container>
     </v-main>
     <v-dialog v-model="settingDialog" scrollable max-width="500" :close-on-back="false" :close-on-content-click="false">

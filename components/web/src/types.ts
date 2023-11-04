@@ -8,6 +8,29 @@ export enum SwitchType {
 export enum SensorType {
     BAR = 1, CIRCLE
 }
+export interface ApiItem {
+    id: number
+    kind: 'switch' | 'sensor'
+    type: SwitchType | SensorType
+    status: boolean
+    name: string
+    value: boolean | number
+}
+
+export interface ApiItemSwitch extends ApiItem {
+    kind: 'switch'
+    type: SwitchType
+    /** ON/OFF */
+    value: boolean
+}
+
+export interface ApiItemSensor extends ApiItem {
+    kind: 'sensor'
+    type: SensorType
+    /** 0 to 100 */
+    value: number
+}
+
 /**
 struct app_config
 {
@@ -31,9 +54,9 @@ export interface AppConfig {
     /** uint8_t */
     switchValues: number
     /** uint8_t */
-    switchCfg: {status: boolean, type: SwitchType}[]
+    switchCfg: { status: boolean, type: SwitchType }[]
     /** uint8_t */
-    sensorCfg: {status: boolean, type: SensorType}[]
+    sensorCfg: { status: boolean, type: SensorType }[]
     /** uint8_t */
     reserved1: number
     /** uint16_t */
