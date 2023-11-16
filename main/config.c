@@ -2,6 +2,7 @@
 #include <string.h>
 #include "esp_log.h"
 #include "esp_err.h"
+#include "esp_system.h"
 #include "nvs.h"
 #include "esp8266/rom_functions.h"
 #include "esp_sha.h"
@@ -147,7 +148,7 @@ esp_err_t config_save(void *handle)
     return nvs_save(handle, CONFIG_NAMEKEY, (void *)&config, sizeof(struct app_config));
 }
 
-void config_reset()
+static void config_reset()
 {
     uint8_t mac[6];
     int i;
@@ -304,6 +305,7 @@ static void on_ws_update_switches(ws_cli_conn_t *client, const unsigned char *ms
     if (ws_msg[1] == true)
         on_ws_client(NULL, NULL, 0, WS_FR_OP_BIN);
 }
+
 static void on_ws_update_sensors(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
 {
     char ws_msg[2] = {WS_MSG_ID_UPDATE_SENSORS, false};
@@ -341,18 +343,47 @@ static void on_ws_restart(ws_cli_conn_t *client, const unsigned char *msg, uint6
     esp_restart();
 }
 
-static void on_ws_reset_config(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+static esp_err_t reset_wifi_config()
 {
-    nvs_clear(NULL);
-    on_ws_restart(client, msg, size, type);
+    esp_err_t err;
+    nvs_handle_t handle;
+    err = nvs_open("nvs.net80211", NVS_READWRITE, &handle);
+
+    if (err == ESP_ERR_NVS_NOT_INITIALIZED)
+    {
+        ESP_LOGE(TAG, "%s: NVS not ready", __func__);
+        return err;
+    }
+    else if (err != ESP_OK)
+    {
+        ESP_LOGW(TAG, "nvs_open: %s (0x%x)", esp_err_to_name(err), err);
+        return err;
+    }
+    err = nvs_erase_all(handle);
+    if (err != ESP_OK)
+    {
+        ESP_LOGW(TAG, "nvs_erase net80211: %s (0x%x)", esp_err_to_name(err), err);
+        return err;
+    }
+    nvs_close(handle);
+    return err;
 }
 
 static int cmd_reset(int argc, char **argv)
 {
     nvs_clear(NULL);
     web_socket_close_all_clients();
+    // Clear wifi config
+    reset_wifi_config();
     vTaskDelay(500 / portTICK_PERIOD_MS);
+    // system_restore();
+    esp_restart();
     return 0;
+}
+
+static void on_ws_reset_config(ws_cli_conn_t *client, const unsigned char *msg, uint64_t size, int type)
+{
+    cmd_reset(0, NULL);
 }
 
 esp_err_t config_load()

@@ -160,11 +160,11 @@ esp_err_t app_wifi_connect(const char *ssid, const char *pass)
 {
     EventBits_t bits = STATE();
 
-    if ((bits & (STATE_STA_CONNECTING)))
-    {
-        ESP_LOGI(TAG, "Already connecting %08x", bits);
-        return APP_ERR_ALREADY_CONNECTED;
-    }
+    // if ((bits & (STATE_STA_CONNECTING)))
+    // {
+    //     ESP_LOGI(TAG, "Already connecting %08x", bits);
+    //     return APP_ERR_ALREADY_CONNECTED;
+    // }
 
     set_wifi_mode(WIFI_MODE_STA);
     ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_set_auto_connect(true));

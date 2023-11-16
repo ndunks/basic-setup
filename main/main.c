@@ -55,6 +55,8 @@ void app_main()
     uint8_t mac[6];
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
 
+    config_load();
+
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     APP_STATE = xEventGroupCreate();
 
@@ -71,14 +73,12 @@ void app_main()
 
     ESP_ERROR_CHECK(esp_wifi_init(&init_config));
 
-    config_load();
     actuator_setup(config.switch_values);
     sensor_setup();
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(app_wifi_start());
 
     web_server_main();
-
 
     const esp_console_cmd_t dump_cmd = {
         .command = "dump",

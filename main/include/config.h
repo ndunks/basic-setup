@@ -44,7 +44,6 @@ extern struct app_config config;
 esp_err_t config_load();
 esp_err_t config_save(void *handle);
 esp_err_t nvs_clear(void *handle);
-void config_reset();
 void config_print();
 
 #endif

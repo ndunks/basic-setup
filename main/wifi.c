@@ -154,10 +154,11 @@ on_ws_get_set_config_sta(ws_cli_conn_t *client, const unsigned char *msg, uint64
         ESP_LOGI(TAG, "Update %d " MACSTR "\nIPs " IPSTR " " IPSTR " " IPSTR " ssid: %s, p: %s\n %d", ret.is_enabled == 1, MAC2STR(ret.mac),
                  IP2STR((ip4_addr_t *)&ret.net.ip), IP2STR((ip4_addr_t *)&ret.net.netmask), IP2STR((ip4_addr_t *)&ret.net.gw),
                  ret.ssid, ret.password, ret.auto_connect);
+        app_wifi_disconnect();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
         if (ret.is_enabled)
             app_wifi_connect(ret.ssid, ret.password);
-        else
-            app_wifi_disconnect();
     }
 
     ret.msg_id = WS_MSG_ID_WIFI_CONFIG_STA;
@@ -275,6 +276,15 @@ esp_err_t app_wifi_start(void)
 
     if (mode != WIFI_MODE_NULL)
     {
+        wifi_config_t cfg = {0};
+        // wifi sta not configred, disable auto-connect
+        if (esp_wifi_get_config(WIFI_IF_AP, &cfg) == ESP_OK)
+        {
+            if (cfg.sta.ssid == NULL || strlen((const char *)cfg.sta.ssid) == 0)
+            {
+                esp_wifi_set_auto_connect(false);
+            }
+        }
         if ((err = esp_wifi_start()) != ESP_OK)
             goto error3;
     }
