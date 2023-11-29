@@ -6,13 +6,13 @@
 #include "web-socket-handler.h"
 
 // GPIO12 -> SHCP (Shift Register Clock Input)
-#define ACTUATOR_PIN_CLOCK GPIO_NUM_12
+#define ACTUATOR_PIN_CLOCK GPIO_NUM_13
 // GPIO13 -> DS   (Serial Data Input)
-#define ACTUATOR_PIN_DS GPIO_NUM_13
+#define ACTUATOR_PIN_DS GPIO_NUM_16
 // GPIO14 -> STCP (Storage Register Clock Input)
-#define ACTUATOR_PIN_STCP GPIO_NUM_14
+#define ACTUATOR_PIN_STCP GPIO_NUM_12
 
-#define ACTUATOR_PIN_ENABLE GPIO_NUM_16
+#define ACTUATOR_PIN_ENABLE GPIO_NUM_14
 
 static struct
 {

@@ -6,9 +6,9 @@
 #include "esp_log.h"
 #include "web-socket-handler.h"
 
-#define SENSOR_PIN_S0 GPIO_NUM_4
-#define SENSOR_PIN_S1 GPIO_NUM_5
-#define SENSOR_PIN_S2 GPIO_NUM_15
+#define SENSOR_PIN_S0 GPIO_NUM_15
+#define SENSOR_PIN_S1 GPIO_NUM_4
+#define SENSOR_PIN_S2 GPIO_NUM_5
 
 static struct
 {
