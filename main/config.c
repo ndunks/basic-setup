@@ -7,7 +7,9 @@
 #include "esp8266/rom_functions.h"
 #include "esp_sha.h"
 #include "config.h"
+#if CONFIG_APP_WITH_COMMANDS
 #include "terminal.h"
+#endif
 #include "tcpip_adapter.h"
 #include "web-socket-handler.h"
 
@@ -115,10 +117,6 @@ static esp_err_t password_check(const char *plain, size_t len)
     err = nvs_get_blob(handle, CONFIG_PWDKEY, &stored_pwd, &stored_len);
     if (err == ESP_OK)
     {
-        ESP_LOGI(TAG, "Compare PWD, %u %u %02x%02x%02x%02x %02x%02x%02x%02x",
-                 len, stored_len,
-                 input_pwd[0], input_pwd[1], input_pwd[2], input_pwd[3],
-                 stored_pwd[0], stored_pwd[1], stored_pwd[2], stored_pwd[3]);
         if (stored_len != sizeof(stored_pwd))
         {
             ESP_LOGW(TAG, "%s: invalid length of pwd (%d)", __func__, stored_len);
@@ -179,7 +177,9 @@ static void config_reset()
     // All enabled, type = switch
     memset(config.switch_cfg, 1 << 7 | BUTTON_TYPE_SWITCH, APP_SWITCH_COUNT);
     // All enabled, type = bar
+#if (APP_SENSOR_COUNT != 0)
     memset(config.sensor_cfg, 1 << 7 | SENSOR_TYPE_BAR, APP_SENSOR_COUNT);
+#endif
     config.sensor_delay = 1000;
     sprintf(config.hostname, "OSH-%s", device_id);
     for (i = 0; i < APP_SWITCH_COUNT; i++)
@@ -436,6 +436,7 @@ esp_err_t config_load()
     config_print();
 
     nvs_close(handle);
+#if CONFIG_APP_WITH_COMMANDS
     const esp_console_cmd_t reset_cmd = {
         .command = "reset",
         .help = "Reset configuration",
@@ -444,6 +445,7 @@ esp_err_t config_load()
         .argtable = NULL};
 
     ESP_ERROR_CHECK_WITHOUT_ABORT(esp_console_cmd_register(&reset_cmd));
+#endif
 
     web_socket_add_handler(WS_ON_OPEN, &on_ws_client);
     web_socket_add_handler(WS_MSG_ID_LOGIN, &on_ws_login);

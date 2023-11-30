@@ -125,11 +125,10 @@ export function parseAppConfigStruct(b: Uint8Array): AppConfig {
         switches: [...new Array(switchLen)].map((_, i) => {
             return reader.readString(APP_NAME_MAX_SIZE)
         }),
-        sensors: [...new Array(sensorLen)].map((_, i) => {
+        sensors: sdkconfig.CONFIG_APP_WITH_SENSOR ? [...new Array(sensorLen)].map((_, i) => {
             return reader.readString(APP_NAME_MAX_SIZE)
-        }),
+        }) : [],
     }
-    console.debug(cfg)
     return cfg
 }
 

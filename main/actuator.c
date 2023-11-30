@@ -5,14 +5,21 @@
 #include "terminal.h"
 #include "web-socket-handler.h"
 
-// GPIO12 -> SHCP (Shift Register Clock Input)
-#define ACTUATOR_PIN_CLOCK GPIO_NUM_13
-// GPIO13 -> DS   (Serial Data Input)
-#define ACTUATOR_PIN_DS GPIO_NUM_16
-// GPIO14 -> STCP (Storage Register Clock Input)
-#define ACTUATOR_PIN_STCP GPIO_NUM_12
+// SHCP (Shift Register Clock Input)
+// #define ACTUATOR_PIN_CLOCK GPIO_NUM_13
+#define ACTUATOR_PIN_CLOCK GPIO_NUM_0
 
-#define ACTUATOR_PIN_ENABLE GPIO_NUM_14
+// DS   (Serial Data Input)
+// #define ACTUATOR_PIN_DS GPIO_NUM_16
+#define ACTUATOR_PIN_DS GPIO_NUM_2
+
+// STCP (Storage Register Clock Input)
+// #define ACTUATOR_PIN_STCP GPIO_NUM_12
+#define ACTUATOR_PIN_STCP GPIO_NUM_3 // RXD
+
+// #define ACTUATOR_PIN_ENABLE GPIO_NUM_14
+// in esp01:
+// #define ACTUATOR_PIN_ENABLE PIN_OE
 
 static struct
 {
@@ -44,7 +51,11 @@ void actuator_setup(unsigned char initial_value)
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
+#ifdef ACTUATOR_PIN_ENABLE
     io_conf.pin_bit_mask = (1 << ACTUATOR_PIN_CLOCK) | (1 << ACTUATOR_PIN_DS) | (1 << ACTUATOR_PIN_STCP) | (1 << ACTUATOR_PIN_ENABLE);
+#else
+    io_conf.pin_bit_mask = (1 << ACTUATOR_PIN_CLOCK) | (1 << ACTUATOR_PIN_DS) | (1 << ACTUATOR_PIN_STCP);
+#endif
     io_conf.pull_down_en = 0;
     io_conf.pull_up_en = 0;
 
@@ -52,7 +63,9 @@ void actuator_setup(unsigned char initial_value)
     gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
     gpio_set_level(ACTUATOR_PIN_DS, 0);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
+#ifdef ACTUATOR_PIN_ENABLE
     gpio_set_level(ACTUATOR_PIN_ENABLE, 0);
+#endif
     actuator_update(initial_value);
 
     // web_socket_add_handler(0, &on_ws_client);
@@ -83,15 +96,15 @@ void actuator_update(unsigned char value)
 
         // Clock pulse
         gpio_set_level(ACTUATOR_PIN_CLOCK, 1);
-        //ets_delay_us(1);
+        // vTaskDelay(500 / portTICK_PERIOD_MS);
         gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
-       // ets_delay_us(1);
+        // vTaskDelay(500 / portTICK_PERIOD_MS);
     }
     // latch
     gpio_set_level(ACTUATOR_PIN_STCP, 1);
-    //ets_delay_us(1);
+    // vTaskDelay(500 / portTICK_PERIOD_MS);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
-    //ets_delay_us(1);
+    // vTaskDelay(500 / portTICK_PERIOD_MS);
     config.switch_values = value;
     config_save(NULL);
 

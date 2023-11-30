@@ -1,3 +1,4 @@
+import './sdkconfig'
 import './global'
 import { Api } from "./api"
 

@@ -33,24 +33,26 @@ const sensorEnabled = computed(
                 </v-col>
             </v-row>
         </v-item-group>
-        <div class="my-3">Sensors</div>
-        <v-row>
-            <v-col cols="12" sm="6" md="4" lg="3" v-for="({ v, i }) of sensorEnabled" :key="i">
-                <v-card v-if="api.sensor.value.status[i]" :title="v" density="compact" rounded
-                    class="d-flex flex-column justify-center align-center" height="100">
-                    <v-card-text class="w-100 text-center">
-                        <v-progress-circular size="40" v-if="api.sensor.value.types[i] == SensorType.CIRCLE" color="primary"
-                            :model-value="api.sensorValues.value[i]">
-                            {{ api.sensorValues.value[i] }}
-                        </v-progress-circular>
-                        <template v-else>
-                            {{ api.sensorValues.value[i] }}
-                            <v-progress-linear height="20" color="primary" :model-value="api.sensorValues.value[i]">
-                            </v-progress-linear>
-                        </template>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
+        <template v-if="sensorEnabled.length">
+            <div class="my-3">Sensors</div>
+            <v-row>
+                <v-col cols="12" sm="6" md="4" lg="3" v-for="({ v, i }) of sensorEnabled" :key="i">
+                    <v-card v-if="api.sensor.value.status[i]" :title="v" density="compact" rounded
+                        class="d-flex flex-column justify-center align-center" height="100">
+                        <v-card-text class="w-100 text-center">
+                            <v-progress-circular size="40" v-if="api.sensor.value.types[i] == SensorType.CIRCLE"
+                                color="primary" :model-value="api.sensorValues.value[i]">
+                                {{ api.sensorValues.value[i] }}
+                            </v-progress-circular>
+                            <template v-else>
+                                {{ api.sensorValues.value[i] }}
+                                <v-progress-linear height="20" color="primary" :model-value="api.sensorValues.value[i]">
+                                </v-progress-linear>
+                            </template>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+        </template>
     </div>
 </template>

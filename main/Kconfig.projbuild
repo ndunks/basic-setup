@@ -18,4 +18,16 @@ menu "App Configuration"
         help
             Default timeout on Wifi operation
 
+    config APP_WITH_SENSOR
+        bool "With Sensor"
+        default n
+        help
+            Include sensor functions
+
+    config APP_WITH_COMMANDS
+        bool "With Serial Terminal"
+        default n
+        help
+            Include terminal functions via UART
+
 endmenu

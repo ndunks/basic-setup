@@ -4,7 +4,11 @@
 #include "tcpip_adapter.h"
 // Only support for 8
 #define APP_SWITCH_COUNT 8
+#if CONFIG_APP_WITH_SENSOR
 #define APP_SENSOR_COUNT 8
+#else
+#define APP_SENSOR_COUNT 0
+#endif
 #define APP_NAME_MAX_SIZE 24
 #define APP_PASSWORD_MAX_SIZE 128
 #define BUTTON_TYPE_SWITCH 1

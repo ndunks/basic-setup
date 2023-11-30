@@ -27,17 +27,14 @@ const menus = [
   { text: "Password", icon: mdiKey, view: ConfigPassword },
   { text: "Settings", icon: mdiCog, view: ConfigGeneral },
 ]
-
+if (!sdkconfig.CONFIG_APP_WITH_SENSOR) {
+  menus.splice(menus.findIndex(v => v.view == ConfigSensors), 1)
+}
 let currentSettingView = null
 
 function clickSettings(i: number) {
   currentSettingView = menus[i].view
   drawer.value = false
-  settingDialog.value = true
-}
-
-function onEdit(what: 'sensor' | 'switch') {
-  currentSettingView = what == 'sensor' ? ConfigSensors : ConfigSwitches
   settingDialog.value = true
 }
 
@@ -92,7 +89,7 @@ function clickRestart() {
     </v-navigation-drawer>
     <v-main>
       <v-container class="fill-height">
-        <Dashboard/>
+        <Dashboard />
       </v-container>
     </v-main>
     <v-dialog v-model="settingDialog" scrollable max-width="500" :close-on-back="false" :close-on-content-click="false">

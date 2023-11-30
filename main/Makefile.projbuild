@@ -1,6 +1,6 @@
 FLASH_BIN := build/flash.bin
 
-.PHONY: info raw qemulate mount
+.PHONY: info raw qemulate mount web
 
 # --flash_mode dio --flash_freq 40m --flash_size 2MB
 # 0x0 bootloader/bootloader.bin
@@ -28,6 +28,9 @@ info: $(APP_ELF) bootloader partition_table
 
 mount: $(BUILD_DIR_BASE)
 	mount | grep $$PWD || sudo mount -t tmpfs tmpfs $<
+
+web:
+	cd ../components/web && npm run build && npm run header
 
 $(BUILD_DIR_BASE):
 	mkdir -p $@

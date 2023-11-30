@@ -2,13 +2,21 @@
 #include "config.h"
 #include "driver/gpio.h"
 #include "driver/adc.h"
-#include "terminal.h"
 #include "esp_log.h"
 #include "web-socket-handler.h"
 
 #define SENSOR_PIN_S0 GPIO_NUM_15
 #define SENSOR_PIN_S1 GPIO_NUM_4
 #define SENSOR_PIN_S2 GPIO_NUM_5
+
+#if CONFIG_APP_WITH_COMMANDS
+#include "terminal.h"
+static struct
+{
+    struct arg_int *num;
+    struct arg_end *end;
+} sensor_args;
+#endif
 
 static struct
 {
@@ -19,12 +27,6 @@ static struct
     .msgId = WS_MSG_ID_SENSOR,
     .len = APP_SENSOR_COUNT & 0xff,
     .values = {0}};
-
-static struct
-{
-    struct arg_int *num;
-    struct arg_end *end;
-} sensor_args;
 
 static void read_sensors()
 {
@@ -49,6 +51,7 @@ static void read_sensors()
     }
 }
 
+#if CONFIG_APP_WITH_COMMANDS
 static int sensor_cmd(int argc, char **argv)
 {
     int nerrors = arg_parse(argc, argv, (void **)&sensor_args);
@@ -69,6 +72,7 @@ static int sensor_cmd(int argc, char **argv)
 
     return 0;
 }
+#endif
 
 void sensor_setup()
 {
@@ -89,9 +93,9 @@ void sensor_setup()
     };
 
     ESP_ERROR_CHECK(adc_init(&cfg));
+    xTaskCreate(&read_sensors, "sens", 1024, NULL, 1, NULL);
 
-    // web_socket_add_handler(0, &on_ws_client);
-    // web_socket_add_handler(WS_MSG_ID_SENSOR, &on_ws_get);
+#if CONFIG_APP_WITH_COMMANDS
     // register terminal command
     sensor_args.num = arg_int0(NULL, NULL, "<n>", "Num (1 - 8, 0 = all)");
     sensor_args.end = arg_end(1);
@@ -105,6 +109,5 @@ void sensor_setup()
     };
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
-
-    xTaskCreate(&read_sensors, "sens", 1024, NULL, 1, NULL);
+#endif
 }
