@@ -5,22 +5,22 @@
 #include "terminal.h"
 #include "web-socket-handler.h"
 
+#if CONFIG_APP_ESP01_SUPPORT
+#include "driver/uart.h"
 // SHCP (Shift Register Clock Input)
-// #define ACTUATOR_PIN_CLOCK GPIO_NUM_13
 #define ACTUATOR_PIN_CLOCK GPIO_NUM_0
-
 // DS   (Serial Data Input)
-// #define ACTUATOR_PIN_DS GPIO_NUM_16
 #define ACTUATOR_PIN_DS GPIO_NUM_2
-
+// STCP (Storage Register Clock Input) // RXD
+#define ACTUATOR_PIN_STCP GPIO_NUM_3
+#else
+// SHCP (Shift Register Clock Input)
+#define ACTUATOR_PIN_CLOCK GPIO_NUM_13
+// DS   (Serial Data Input)
+#define ACTUATOR_PIN_DS GPIO_NUM_16
 // STCP (Storage Register Clock Input)
-// #define ACTUATOR_PIN_STCP GPIO_NUM_12
-#define ACTUATOR_PIN_STCP GPIO_NUM_3 // RXD
-
-// #define ACTUATOR_PIN_ENABLE GPIO_NUM_14
-// in esp01:
-// #define ACTUATOR_PIN_ENABLE PIN_OE
-
+#define ACTUATOR_PIN_STCP GPIO_NUM_12
+#endif
 static struct
 {
     struct arg_int *byte;
@@ -48,6 +48,15 @@ static void on_ws_update(ws_cli_conn_t *client, const unsigned char *msg, uint64
 
 void actuator_setup(unsigned char initial_value)
 {
+
+#ifdef CONFIG_APP_ESP01_SUPPORT
+    uart_disable_rx_intr(UART_NUM_0);
+    // set pin function support for ESP01
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0);
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_GPIO3);
+#endif
+
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_DISABLE;
     io_conf.mode = GPIO_MODE_OUTPUT;
