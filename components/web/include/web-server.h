@@ -34,13 +34,13 @@ static const char web_mime_text_html[] = "text/html";
 
 static webfs_t const web_files[] = {
     {.name = "favicon.png", .type = web_mime_image_png, .gzip = false, .offset = 0, .size = 772},
-    {.name = "index-20f6e9ff.js", .type = web_mime_application_javascript, .gzip = true, .offset = 772, .size = 96800},
-    {.name = "index-ed2142d7.css", .type = web_mime_text_css, .gzip = true, .offset = 97572, .size = 40536},
-    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 138108, .size = 282}};
+    {.name = "index-c5bf8c77.js", .type = web_mime_application_javascript, .gzip = true, .offset = 772, .size = 96817},
+    {.name = "index-ed2142d7.css", .type = web_mime_text_css, .gzip = true, .offset = 97589, .size = 40536},
+    {.name = "index.html", .type = web_mime_text_html, .gzip = true, .offset = 138125, .size = 282}};
 
 #define INDEX_HTML_OFS 3
 #define WEB_FILE_NAME_MAX 18
-    // Total size: 138390 bytes
-    // Generated at 11/30/2023, 7:27:52 PM
+    // Total size: 138407 bytes
+    // Generated at 12/4/2023, 2:18:38 PM
 /* GENERATED CODE END */
 #endif
