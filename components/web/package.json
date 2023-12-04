@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "prebuild": "node generate-config.js",
     "build": "run-p type-check build-only",
-    "header": "node web.js",
+    "postbuild": "node web.js",
     "size": "echo $(( `cat dist/* | wc -c` / 1024)) KB",
     "preview": "vite preview",
     "build-only": "vite build",
