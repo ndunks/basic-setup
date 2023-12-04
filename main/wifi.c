@@ -74,7 +74,8 @@ static void handle_wifi_event(void *arg, esp_event_base_t event_base,
             STATE_CLR(STATE_STA_CONNECTING);
             STATE_SET(STATE_STA_FAIL);
             retry_cntr = 0;
-            ESP_LOGW(TAG, "connect to the AP fail");
+            ESP_LOGW(TAG, "connect to the AP fail, enabling soft-ap");
+            app_wifi_ap_start(NULL, NULL);
             return;
         }
 
