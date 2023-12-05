@@ -101,7 +101,8 @@ void actuator_update(unsigned char value)
     for (int8_t i = 7; i >= 0; i--)
     {
         // Bit data
-        gpio_set_level(ACTUATOR_PIN_DS, (value >> i) & 1);
+        // Relay module is ACTIVE LOW, 1 mean OFF, 0 mean ON
+        gpio_set_level(ACTUATOR_PIN_DS, !((value >> i) & 1));
 
         // Clock pulse
         gpio_set_level(ACTUATOR_PIN_CLOCK, 1);
