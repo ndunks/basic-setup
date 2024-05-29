@@ -74,15 +74,17 @@ static void handle_wifi_event(void *arg, esp_event_base_t event_base,
             STATE_CLR(STATE_STA_CONNECTING);
             STATE_SET(STATE_STA_FAIL);
             retry_cntr = 0;
-            ESP_LOGW(TAG, "connect to the AP fail, enabling soft-ap");
-            app_wifi_ap_start(NULL, NULL);
+            // todo: make options if fail reconnect, should enable AP or restart device
+            // ESP_LOGW(TAG, "connect to the AP fail, enabling soft-ap");
+            //app_wifi_ap_start(NULL, NULL);
+            ESP_LOGI(TAG, "connect to the AP fail, restarting");
+            esp_restart();
             return;
         }
 
         STATE_CLR(STATE_STA_CONNECTED);
         // Will reconnect
         retry_cntr++;
-        // STATE_SET(STATE_STA_CONNECTING);
 
         switch (reason)
         {
@@ -99,8 +101,9 @@ static void handle_wifi_event(void *arg, esp_event_base_t event_base,
         // check if forced disconect by user
         if (!STATE_IS(STATE_STA_CONNECTING))
         {
-            ESP_LOGI(TAG, ("Reconnect aborted by user"));
-            return;
+            STATE_SET(STATE_STA_CONNECTING);
+            ESP_LOGI(TAG, ("Reconnect aborted by user?"));
+            //return;
         }
         ESP_LOGI(TAG, "retry %d to connect to the AP", retry_cntr);
         esp_wifi_connect();
