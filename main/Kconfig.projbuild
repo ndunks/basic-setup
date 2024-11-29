@@ -30,9 +30,15 @@ menu "App Configuration"
         help
             Include terminal functions via UART
     config APP_ESP01_SUPPORT
-        bool "For ESP01"
+        bool "For ESP01 with Shift-Register"
         default n
         help
             Switch GPIO to ESP01
+    config APP_ESP01_SUPPORT_PLAIN
+        depends on APP_ESP01_SUPPORT
+        bool "For ESP01 without Shift-Regester"
+        default n
+        help
+            For ESP01 without Shift-Regester (4 Actuator only)
 
 endmenu

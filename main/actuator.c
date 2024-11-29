@@ -7,12 +7,26 @@
 
 #if CONFIG_APP_ESP01_SUPPORT
 #include "driver/uart.h"
+#if CONFIG_APP_ESP01_SUPPORT_PLAIN
+// https://templates.blakadder.com/LC-ESP01-4R-12V.html
+// GPIO00	Relay1
+// GPIO01	None
+// GPIO02	Relay2
+// GPIO03	None
+// GPIO04	Relay3
+// GPIO05	Relay4
+#define ACTUATOR_1 GPIO_NUM_0
+#define ACTUATOR_2 GPIO_NUM_2
+#define ACTUATOR_3 GPIO_NUM_4
+#define ACTUATOR_4 GPIO_NUM_5
+#else
 // SHCP (Shift Register Clock Input)
 #define ACTUATOR_PIN_CLOCK GPIO_NUM_3
 // DS   (Serial Data Input)
 #define ACTUATOR_PIN_DS GPIO_NUM_2
 // STCP (Storage Register Clock Input) // RXD
 #define ACTUATOR_PIN_STCP GPIO_NUM_0
+#endif
 #else
 // SHCP (Shift Register Clock Input)
 #define ACTUATOR_PIN_CLOCK GPIO_NUM_13
@@ -55,6 +69,10 @@ void actuator_setup(unsigned char initial_value)
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0);
     PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_GPIO3);
+#if CONFIG_APP_ESP01_SUPPORT_PLAIN
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_GPIO1);
+    uart_disable_tx_intr(UART_NUM_0);
+#endif
 #endif
 
     gpio_config_t io_conf = {};
@@ -62,6 +80,8 @@ void actuator_setup(unsigned char initial_value)
     io_conf.mode = GPIO_MODE_OUTPUT;
 #ifdef ACTUATOR_PIN_ENABLE
     io_conf.pin_bit_mask = (1 << ACTUATOR_PIN_CLOCK) | (1 << ACTUATOR_PIN_DS) | (1 << ACTUATOR_PIN_STCP) | (1 << ACTUATOR_PIN_ENABLE);
+#elif CONFIG_APP_ESP01_SUPPORT_PLAIN
+    io_conf.pin_bit_mask = (1 << ACTUATOR_1) | (1 << ACTUATOR_2) | (1 << ACTUATOR_3) | (1 << ACTUATOR_4);
 #else
     io_conf.pin_bit_mask = (1 << ACTUATOR_PIN_CLOCK) | (1 << ACTUATOR_PIN_DS) | (1 << ACTUATOR_PIN_STCP);
 #endif
@@ -69,9 +89,11 @@ void actuator_setup(unsigned char initial_value)
     io_conf.pull_up_en = 0;
 
     gpio_config(&io_conf);
+#ifndef CONFIG_APP_ESP01_SUPPORT_PLAIN
     gpio_set_level(ACTUATOR_PIN_CLOCK, 0);
     gpio_set_level(ACTUATOR_PIN_DS, 0);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
+#endif
 #ifdef ACTUATOR_PIN_ENABLE
     gpio_set_level(ACTUATOR_PIN_ENABLE, 0);
 #endif
@@ -98,7 +120,13 @@ void actuator_update(unsigned char value)
 {
     // static uint32_t delay = (1);
 
-    for (int8_t i = 7; i >= 0; i--)
+#if CONFIG_APP_ESP01_SUPPORT_PLAIN
+        gpio_set_level(ACTUATOR_1,!((value >> 3) & 1)); 
+        gpio_set_level(ACTUATOR_2,!((value >> 2) & 1)); 
+        gpio_set_level(ACTUATOR_3,!((value >> 1) & 1)); 
+        gpio_set_level(ACTUATOR_4,!((value >> 0) & 1));
+#else
+    for (int8_t i = (APP_SWITCH_COUNT - 1 ) ; i >= 0; i--)
     {
         // Bit data
         // Relay module is ACTIVE LOW, 1 mean OFF, 0 mean ON
@@ -115,6 +143,7 @@ void actuator_update(unsigned char value)
     // vTaskDelay(500 / portTICK_PERIOD_MS);
     gpio_set_level(ACTUATOR_PIN_STCP, 0);
     // vTaskDelay(500 / portTICK_PERIOD_MS);
+#endif
     config.switch_values = value;
     config_save(NULL);
 
