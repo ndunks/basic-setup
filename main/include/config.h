@@ -2,8 +2,14 @@
 #define APP_CONFIG_H
 
 #include "tcpip_adapter.h"
-// Only support for 8
+#if CONFIG_APP_ESP01_SUPPORT_PLAIN || CONFIG_APP_ESP01_SUPPORT_LC
+// Warning, not tested
+// Without shift register
+#define APP_SWITCH_COUNT 4
+#else
+// ESP-01/NodeMCU/Wemos With shift-register, Only support for 8
 #define APP_SWITCH_COUNT 8
+#endif
 #if CONFIG_APP_WITH_SENSOR
 #define APP_SENSOR_COUNT 8
 #else

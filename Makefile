@@ -55,6 +55,10 @@ spiffs \
 wear_levelling \
 wifi_provisioning \
 
+# ifneq ($(CONFIG_APP_WITH_COMMANDS),y)
+# EXCLUDE_COMPONENTS += commands
+# endif
+
 include $(IDF_PATH)/make/project.mk
 
 web:

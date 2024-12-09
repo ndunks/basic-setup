@@ -16,12 +16,13 @@ const sensorEnabled = computed(
     <div class="w-100">
         <div class="mb-3">Switches</div>
         <v-item-group multiple :model-value="api.switchActives.value" selected-class="bg-success"
-            @update:model-value="api.updateActuator">
+            @update:model-value="api.updateActuators">
             <v-row Xjustify="center" Xno-gutters>
                 <v-col cols="6" sm="4" lg="3" v-for="({ v, i }) of switchEnabled" :key="i">
                     <v-item v-if="api.switch.value.status[i]" :value="i" v-slot="{ isSelected, selectedClass, toggle }">
-                        <v-card @click="toggle" :class="selectedClass" rounded
-                            class="d-flex flex-column justify-center align-center" height="100">
+                        <v-card @click="api.updateSingleActuator(i, !isSelected, toggle)"
+                            :class="selectedClass" rounded class="d-flex flex-column justify-center align-center"
+                            height="100">
                             <div>
                                 <v-icon size="50" :icon="isSelected ? mdiLightbulbOn : mdiLightbulb" />
                             </div>

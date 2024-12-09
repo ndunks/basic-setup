@@ -115,7 +115,7 @@ void actuator_setup(unsigned char initial_value)
 
     ESP_ERROR_CHECK(esp_console_cmd_register(&cmd));
 }
-
+#ifndef CONFIG_APP_ESP01_SUPPORT_LC
 void actuator_update(unsigned char value)
 {
     // static uint32_t delay = (1);
@@ -151,3 +151,4 @@ void actuator_update(unsigned char value)
     const char ws_msg[2] = {WS_MSG_ID_ACTUATOR, value};
     ws_sendframe(NULL, ws_msg, 2, WS_FR_OP_BIN);
 }
+#endif

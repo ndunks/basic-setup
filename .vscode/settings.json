@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.htm": "wintercms-twig",
+        "esp_log.h": "c",
+        "uart.h": "c",
+        "linenoise.h": "c"
+    }
+}

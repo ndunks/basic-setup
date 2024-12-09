@@ -29,16 +29,46 @@ menu "App Configuration"
         default y
         help
             Include terminal functions via UART
-    config APP_ESP01_SUPPORT
-        bool "For ESP01 with Shift-Register"
-        default n
-        help
-            Switch GPIO to ESP01
-    config APP_ESP01_SUPPORT_PLAIN
+    choice 
+        prompt "Board Type"
+        config APP_NODEMCU_SUPPORT
+            bool "NodeMCU"
+            default y
+            help
+                For NodeMCU/Wemos D1 Mini
+        config APP_ESP01_SUPPORT
+            bool "ESP-01"
+            default n
+            help
+                For AI Thinker ESP-01
+    endchoice
+    choice 
+        prompt "ESP-01 Actuators"
         depends on APP_ESP01_SUPPORT
-        bool "For ESP01 without Shift-Regester"
-        default n
-        help
-            For ESP01 without Shift-Regester (4 Actuator only)
+        config APP_ESP01_SUPPORT_SHIFTREG
+            bool "With Shift-Register"
+            default y
+            help
+                For ESP-01 Shift-Register (8 Actuator only)
+        config APP_ESP01_SUPPORT_PLAIN
+            bool "Without Shift-Register"
+            default n
+            help
+                For ESP-01 with only Direct GPIO, no tx, rx (4 Actuator only)
+        config APP_ESP01_SUPPORT_LC
+            bool "Serial with LC-ESP01-4R-12V"
+            default n
+            help
+                LC Technology 12V 4 Channel Relay Board (LC-ESP01-4R-12V). https://templates.blakadder.com/LC-ESP01-4R-12V.html
+    endchoice
+    choice 
+        prompt "NodeMCU Actuators"
+        depends on APP_NODEMCU_SUPPORT
+        config APP_ESP01_SUPPORT_SHIFTREG
+            bool "With Shift-Register"
+            default y
+            help
+                For NodeMCU Shift-Register (8 Actuator only)
+    endchoice
 
 endmenu

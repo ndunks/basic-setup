@@ -90,12 +90,29 @@ export class Api {
     }
 
     // Index of active switch
-    updateActuator = (values: number[]) => {
+    updateActuators = (values: number[]) => {
         const byte = bitsFilterArraytoByte(values)
         this.actuatorPendingUpdate.value = byte ^ bitsFilterArraytoByte(this.switchActives.value)
+        console.log(values, 'Pending', this.actuatorPendingUpdate.value)
+        if (!sdkconfig.CONFIG_APP_ESP01_SUPPORT_LC) {
+            const uint8Array = new Uint8Array([0x01, byte])
+            console.debug('REQ ACTUATOR UPDATE MULTI', values)
+            this.ws.send(uint8Array);
+        }
 
+    }
+
+    updateSingleActuator(id: number, valueBool: boolean, toggle: Function) {
+
+        toggle()
+
+        const value = valueBool ? 1 : 0
+
+        if (!sdkconfig.CONFIG_APP_ESP01_SUPPORT_LC) return;
+
+        const byte = id << 4 | value & 0b1111
         const uint8Array = new Uint8Array([0x01, byte])
-        console.debug('REQ ACTUATOR UPDATE', values)
+        console.debug('REQ ACTUATOR UPDATE SINGLE', byte, byte.toString(2))
         this.ws.send(uint8Array);
     }
 

@@ -3,12 +3,17 @@ set(srcs,
     "wifi.c"
     "config.c"
     "wifi_action.c"
-    "actuator.c"
     )
 
 
 if(CONFIG_APP_WITH_SENSOR)
     list(APPEND srcs "sensor.c")
+endif()
+
+if(CONFIG_APP_ESP01_SUPPORT_LC)
+    list(APPEND srcs "actuator_serial.c")
+else()
+    list(APPEND srcs "actuator.c")
 endif()
 
 if(CONFIG_APP_WITH_COMMANDS)
