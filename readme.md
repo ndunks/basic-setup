@@ -1,56 +1,6 @@
-# ESP-01 Smarthome Switch Controller
+# Setup
 
-A lightweight, high-performance IoT solution for controlling up to 4-channel relays using an ESP-01 (ESP8266). This project features a modern, responsive web interface built with **Vue 3** and communicates via **WebSockets** for near-instantaneous control.
-
-## Features
-
-* **Real-time Control:** Uses WebSockets for low-latency status updates and switching.
-* **Modern UI:** Built with Vite, Vue 3, and Vuetify for a sleek, mobile-friendly "App-like" experience.
-* **Dynamic Configuration:** - Rename switches directly from the UI.
-    * Enable/Disable specific channels.
-    * Set switch types (Switch/Pulse).
-
-* **Network Management:** - Configure WiFi Station mode.
-    * SoftAP (Access Point) broadcast settings.
-
-* **Security:** Built-in password protection and logout functionality.
-* **Efficiency:** Custom lightweight C++ HTTP server designed specifically for the limited resources of the ESP-01.
-
-## 🛠 Tech Stack
-
-### Client-Side
-
-* **Framework:** Vue 3 (Composition API)
-* **Build Tool:** Vite
-* **UI Component Library:** Vuetify 3
-* **Communication:** WebSockets (Client)
-
-### Server-Side (Firmware)
-
-* **Hardware:** ESP8266 (ESP-01/ESP-01S)
-* **Language:** C/CPP (esp8266-rtos-sdk)
-* **Communication:** WebSockets (Server) & Custom HTTP Server
-* **Filesystem:** Custom
-
-
-### Screenshot for 4 channel version
-
-![alt](repo-assets/esp01-4ch-home.png)
-![alt](repo-assets/esp01-4ch-menu.png)
-![alt](repo-assets/esp01-4ch-switch-config.png)
-
-## Usage
-
-1. Power the ESP-01.
-2. Connect to the default Access Point (if not configured).
-3. Navigate to `http://192.168.x.x` or the IP assigned by your router.
-4. Login with default `admin` password.
-5. Go to **Switch Config** to name your rooms.
-6. Start controlling your home!
-
-## Development
-
-### Setup Toolchain (Compiler)
+## Setup Toolchain (Compiler)
 
 - [doc](https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/linux-setup.html)
 
@@ -60,7 +10,7 @@ tar -xzf xtensa-lx106-elf-gcc8_4_0-esp-2020r3-linux-amd64.tar.gz
 
 ```
 
-### Setup SDK (Library)
+## Setup SDK (Library)
 
 - [doc](https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/get-started/index.html#get-started-get-esp-idf)
 
@@ -76,22 +26,22 @@ python3 -m pip install -r $IDF_PATH/requirements.txt
 
 ```
 
-### Configure Project
+## Configure Project
 
 ```sh
 PYTHON=python3 make menuconfig
 ```
 
-### Wiring for 8 Channel
+## Wiring 
 
-### Shift Register 74hc595
+## Shift Register 74hc595
 
 - GPIO12 -> SHCP (Shift Register Clock Input)
 - GPIO13 -> DS   (Serial Data Input)
 - GPIO14 -> STCP (Storage Register Clock Input)
 - GPIO16 -> OE
 
-### Analog Multiplexer 74hc4051
+## Analog Multiplexer 74hc4051
 
 - ADC0   -> Z
 - GPIO4  -> S0

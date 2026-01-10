@@ -166,11 +166,10 @@ static void config_reset()
     // mac: 42F5 200AAF7B
     // cid:      005E6014
     // 0A AF 7B EF 40 16
-#ifndef CONFIG_LOG_BOOTLOADER_LEVEL_NONE
     sprintf(device_id, "%02X%02X%02X%08X",
             mac[3], mac[4], mac[5],
             chip_id);
-#endif
+
     config.config_version = APP_CONFIG_VERSION;
     config.switch_len = APP_SWITCH_COUNT;
     config.sensor_len = APP_SENSOR_COUNT;
@@ -182,7 +181,6 @@ static void config_reset()
     memset(config.sensor_cfg, 1 << 7 | SENSOR_TYPE_BAR, APP_SENSOR_COUNT);
 #endif
     config.sensor_delay = 1000;
-#ifndef CONFIG_LOG_BOOTLOADER_LEVEL_NONE
     sprintf(config.hostname, "OSH-%s", device_id);
     for (i = 0; i < APP_SWITCH_COUNT; i++)
     {
@@ -192,7 +190,7 @@ static void config_reset()
     {
         sprintf(config.sensors[i], "Sensor %d", i + 1);
     }
-#endif
+
     // reset wifi mode too ? or separate command
 }
 
@@ -434,9 +432,9 @@ esp_err_t config_load()
             config_save(&handle);
         }
     }
-#ifndef CONFIG_LOG_BOOTLOADER_LEVEL_NONE
+
     config_print();
-#endif
+
     nvs_close(handle);
 #if CONFIG_APP_WITH_COMMANDS
     const esp_console_cmd_t reset_cmd = {

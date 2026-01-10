@@ -8,11 +8,11 @@
 #if CONFIG_APP_ESP01_SUPPORT
 #include "driver/uart.h"
 // SHCP (Shift Register Clock Input)
-#define ACTUATOR_PIN_CLOCK GPIO_NUM_3
+#define ACTUATOR_PIN_CLOCK GPIO_NUM_0
 // DS   (Serial Data Input)
 #define ACTUATOR_PIN_DS GPIO_NUM_2
 // STCP (Storage Register Clock Input) // RXD
-#define ACTUATOR_PIN_STCP GPIO_NUM_0
+#define ACTUATOR_PIN_STCP GPIO_NUM_3
 #else
 // SHCP (Shift Register Clock Input)
 #define ACTUATOR_PIN_CLOCK GPIO_NUM_13
@@ -65,7 +65,7 @@ void actuator_setup(unsigned char initial_value)
 #else
     io_conf.pin_bit_mask = (1 << ACTUATOR_PIN_CLOCK) | (1 << ACTUATOR_PIN_DS) | (1 << ACTUATOR_PIN_STCP);
 #endif
-    io_conf.pull_down_en = 1;
+    io_conf.pull_down_en = 0;
     io_conf.pull_up_en = 0;
 
     gpio_config(&io_conf);
@@ -101,8 +101,7 @@ void actuator_update(unsigned char value)
     for (int8_t i = 7; i >= 0; i--)
     {
         // Bit data
-        // Relay module is ACTIVE LOW, 1 mean OFF, 0 mean ON
-        gpio_set_level(ACTUATOR_PIN_DS, !((value >> i) & 1));
+        gpio_set_level(ACTUATOR_PIN_DS, (value >> i) & 1);
 
         // Clock pulse
         gpio_set_level(ACTUATOR_PIN_CLOCK, 1);
