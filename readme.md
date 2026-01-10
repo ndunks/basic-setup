@@ -68,6 +68,12 @@ tar -xzf xtensa-lx106-elf-gcc8_4_0-esp-2020r3-linux-amd64.tar.gz
 # Ubuntu 22
 sudo apt-get install gcc git wget make libncurses-dev flex bison gperf python-is-python3 python3-serial
 git clone --recursive https://github.com/espressif/ESP8266_RTOS_SDK.git
+
+mkdir -p $IDF_PATH/venv
+python3 -m venv $IDF_PATH/venv
+. $IDF_PATH/venv/bin/activate
+python3 -m pip install -r $IDF_PATH/requirements.txt
+
 ```
 
 ### Configure Project
