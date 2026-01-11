@@ -1,7 +1,6 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "main.h"
 #include "config.h"
 #include "web-socket-handler.h"
 #include <esp_log.h>

@@ -46,7 +46,7 @@ extern "C"
     /**
      * @brief Max clients connected simultaneously.
      */
-#define MAX_CLIENTS 3
+#define MAX_CLIENTS 5
 
 /**
  * @name Key and message configurations.
@@ -252,6 +252,7 @@ extern "C"
         int32_t last_pong_id;
         int32_t current_ping_id;
         pthread_mutex_t mtx_ping;
+        uint32_t conn_seq;
     } ws_cli_conn_t;
     /**
      * @brief events Web Socket events types.
@@ -283,7 +284,7 @@ extern "C"
     extern int get_handshake_response(char *hsrequest, char **hsresponse);
 
     /* External usage. */
-    //extern char *ws_getaddress(ws_cli_conn_t *client);
+    // extern char *ws_getaddress(ws_cli_conn_t *client);
     extern int ws_sendframe(
         ws_cli_conn_t *cli, const char *msg, uint64_t size, int type);
     extern int ws_sendframe_txt(ws_cli_conn_t *cli, const char *msg);

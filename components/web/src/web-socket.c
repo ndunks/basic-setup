@@ -60,6 +60,11 @@ static struct ws_connection client_socks[MAX_CLIENTS];
 static uint32_t timeout;
 
 /**
+ * Connection counter
+ */
+static uint32_t conn_seq;
+
+/**
  * @brief Client validity macro
  */
 #define CLIENT_VALID(cli)                          \
@@ -1492,7 +1497,8 @@ esp_err_t ws_accept(int sock, char *client_info, char *http_header, ssize_t http
     struct sockaddr_in client; /* Client.                */
     pthread_t client_thread;   /* Client thread.         */
     struct timeval time;       /* Client socket timeout. */
-    int i;                     /* Loop index.            */
+    int i, oldest = -1;        /* Loop index.            */
+    uint32_t oldest_seq = LONG_MAX;
 
     /* Adds client socket to socks list. */
     pthread_mutex_lock(&mutex);
@@ -1500,32 +1506,49 @@ esp_err_t ws_accept(int sock, char *client_info, char *http_header, ssize_t http
     {
         if (client_socks[i].client_sock == -1)
         {
-            client_socks[i].client_sock = sock;
-            client_socks[i].state = WS_STATE_CONNECTING;
-            client_socks[i].close_thrd = false;
-            client_socks[i].last_pong_id = -1;
-            client_socks[i].current_ping_id = -1;
-            strncpy(client_socks[i].info, client_info, sizeof(client_socks[i].info));
-            // set_client_address(&client_socks[i]);
-
-            if (pthread_mutex_init(&client_socks[i].mtx_state, NULL))
-                panic("ENOMEM: close mutex");
-            if (pthread_cond_init(&client_socks[i].cnd_state_close, NULL))
-                panic("ENOMEM: condition var\n");
-            if (pthread_mutex_init(&client_socks[i].mtx_snd, NULL))
-                panic("ENOMEM: send mutex");
-            if (pthread_mutex_init(&client_socks[i].mtx_ping, NULL))
-                panic("ENOMEM: ping/pong mutex");
             break;
+        }
+        else
+        {
+            if (client_socks[i].conn_seq < oldest_seq)
+            {
+                oldest_seq = client_socks[i].conn_seq;
+                oldest = i;
+            }
         }
     }
 
     pthread_mutex_unlock(&mutex);
 
     if (i == MAX_CLIENTS)
-        return WS_ERR_TOO_MANY_CLIENT;
+    {
+        if (oldest < 0 || oldest >= MAX_CLIENTS)
+        {
+            return WS_ERR_TOO_MANY_CLIENT;
+        }
+
+        DEBUG("Close oldest client");
+        close_client(&client_socks[oldest], true);
+        i = oldest;
+    }
 
     ws_cli_conn_t *wsclient = &client_socks[i];
+    wsclient->client_sock = sock;
+    wsclient->state = WS_STATE_CONNECTING;
+    wsclient->close_thrd = false;
+    wsclient->last_pong_id = -1;
+    wsclient->current_ping_id = -1;
+    wsclient->conn_seq = ++conn_seq;
+    strncpy(wsclient->info, client_info, sizeof(wsclient->info));
+
+    if (pthread_mutex_init(&wsclient->mtx_state, NULL))
+        panic("ENOMEM: close mutex");
+    if (pthread_cond_init(&wsclient->cnd_state_close, NULL))
+        panic("ENOMEM: condition var\n");
+    if (pthread_mutex_init(&wsclient->mtx_snd, NULL))
+        panic("ENOMEM: send mutex");
+    if (pthread_mutex_init(&wsclient->mtx_ping, NULL))
+        panic("ENOMEM: ping/pong mutex");
 
     // Do handshake here
     if (do_handshake(wsclient, http_header) != ESP_OK)
@@ -1547,5 +1570,6 @@ esp_err_t ws_accept(int sock, char *client_info, char *http_header, ssize_t http
 
 void web_socket_main()
 {
+    conn_seq = 0;
     memset(client_socks, -1, sizeof(client_socks));
 }
