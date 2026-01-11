@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "config.h": "c",
+        "rom_functions.h": "c",
+        "nvs.h": "c"
+    }
+}

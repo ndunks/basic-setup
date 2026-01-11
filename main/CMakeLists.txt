@@ -7,11 +7,11 @@ set(srcs,
     )
 
 
-if(CONFIG_APP_WITH_SENSOR)
+ifeq($(CONFIG_APP_WITH_SENSOR),y)
     list(APPEND srcs "sensor.c")
 endif()
 
-if(CONFIG_APP_WITH_COMMANDS)
+ifeq($(CONFIG_APP_WITH_COMMANDS),y)
     list(APPEND srcs "terminal.c")
 endif()
 

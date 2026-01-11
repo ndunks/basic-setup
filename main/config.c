@@ -26,7 +26,7 @@ static const char CONFIG_DEFAULT_PASSWORD[] = "admin";
 static esp_err_t nvs_save(void *handle, const char *key, const char *data, size_t data_len)
 {
     esp_err_t err;
-    nvs_handle_t local_handle = 0u;
+    nvs_handle local_handle = 0u;
     if (handle == NULL)
     {
         err = nvs_open(APP_NVS_NAMESPACE, NVS_READWRITE, &local_handle);
@@ -44,7 +44,7 @@ static esp_err_t nvs_save(void *handle, const char *key, const char *data, size_
         handle = &local_handle;
     }
 
-    err = nvs_set_blob(*(nvs_handle_t *)handle, key, data, data_len);
+    err = nvs_set_blob(*(nvs_handle *)handle, key, data, data_len);
     if (err != ESP_OK)
         ESP_LOGW(TAG, "%s: %s (0x%x)", __func__, esp_err_to_name(err), err);
 
@@ -58,7 +58,7 @@ static esp_err_t nvs_save(void *handle, const char *key, const char *data, size_
 esp_err_t nvs_clear(void *handle)
 {
     esp_err_t err;
-    nvs_handle_t local_handle = 0u;
+    nvs_handle local_handle = 0u;
     if (handle == NULL)
     {
         err = nvs_open(APP_NVS_NAMESPACE, NVS_READWRITE, &local_handle);
@@ -76,7 +76,7 @@ esp_err_t nvs_clear(void *handle)
         handle = &local_handle;
     }
 
-    err = nvs_erase_all(*(nvs_handle_t *)handle);
+    err = nvs_erase_all(*(nvs_handle *)handle);
     if (err != ESP_OK)
         ESP_LOGW(TAG, "%s: %s (0x%x)", __func__, esp_err_to_name(err), err);
 
@@ -98,7 +98,7 @@ static int password_hash(const char *plain, size_t len, char *out32byte)
 static esp_err_t password_check(const char *plain, size_t len)
 {
     esp_err_t err;
-    nvs_handle_t handle;
+    nvs_handle handle;
     char input_pwd[32] = {0};
     char stored_pwd[32] = {0};
     size_t stored_len = sizeof(stored_pwd);
@@ -348,7 +348,7 @@ static void on_ws_restart(ws_cli_conn_t *client, const unsigned char *msg, uint6
 static esp_err_t reset_wifi_config()
 {
     esp_err_t err;
-    nvs_handle_t handle;
+    nvs_handle handle;
     err = nvs_open("nvs.net80211", NVS_READWRITE, &handle);
 
     if (err == ESP_ERR_NVS_NOT_INITIALIZED)
@@ -392,7 +392,7 @@ esp_err_t config_load()
 {
     // if no config, set the default
     esp_err_t err;
-    nvs_handle_t handle;
+    nvs_handle handle;
     err = nvs_open(APP_NVS_NAMESPACE, NVS_READWRITE, &handle);
     size_t len;
 

@@ -84,15 +84,23 @@ PYTHON=python3 make menuconfig
 
 ### Wiring for 8 Channel
 
-### Shift Register 74hc595
+### Actuators: Shift Register 74hc595
 
+**ESP01**
+- IO3 -> SHCP (Shift Register Clock Input)
+- IO2 -> DS   (Serial Data Input)
+- IO0 -> STCP (Storage Register Clock Input)
+
+
+**NodeMCU**
 - GPIO12 -> SHCP (Shift Register Clock Input)
 - GPIO13 -> DS   (Serial Data Input)
 - GPIO14 -> STCP (Storage Register Clock Input)
 - GPIO16 -> OE
 
-### Analog Multiplexer 74hc4051
+### Sensors: Analog Multiplexer 74hc4051
 
+**NodeMCU:**
 - ADC0   -> Z
 - GPIO4  -> S0
 - GPIO5  -> S1

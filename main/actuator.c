@@ -7,11 +7,11 @@
 
 #if CONFIG_APP_ESP01_SUPPORT
 #include "driver/uart.h"
-// SHCP (Shift Register Clock Input)
+// SHCP (Shift Register Clock Input) // RXD
 #define ACTUATOR_PIN_CLOCK GPIO_NUM_3
 // DS   (Serial Data Input)
 #define ACTUATOR_PIN_DS GPIO_NUM_2
-// STCP (Storage Register Clock Input) // RXD
+// STCP (Storage Register Clock Input)
 #define ACTUATOR_PIN_STCP GPIO_NUM_0
 #else
 // SHCP (Shift Register Clock Input)
