@@ -198,19 +198,22 @@ static void config_reset()
 
 void config_print()
 {
+    const char *build_date = BUILD_DATE;
     printf("App Config:\n"
            "\tconfig_version: %u\n"
            "\tswitch_len: %u\n"
            "\tswitch_values: %u\n"
            "\tsensor_len: %u\n"
            "\tsensor_delay: %u\n"
-           "\thostname: %s\n",
+           "\thostname: %s\n"
+           "Firmware Build Date: %s\n",
            config.config_version,
            config.switch_len,
            config.switch_values,
            config.sensor_len,
            config.sensor_delay,
-           config.hostname);
+           config.hostname,
+           build_date);
 }
 
 static void on_ws_client(ws_cli_conn_t *client, const unsigned char *_, uint64_t size, int type)

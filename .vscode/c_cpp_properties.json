@@ -22,7 +22,8 @@
                 "/data/apps/esp-sdk/ESP8266_RTOS_SDK/components/newlib/platform_include"
             ],
             "defines": [
-                "__ESP_FILE__=\"dummy.c\""
+                "__ESP_FILE__=\"dummy.c\"",
+                "BUILD_DATE=\"Min 11 Jan 2026 10:18:45  WIB\""
             ],
             "compilerPath": "/data/apps/esp-sdk/bin/xtensa-lx106-elf-gcc",
             "cStandard": "c11",
