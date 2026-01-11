@@ -64,7 +64,9 @@ static int get_info(int argc, char **argv)
     {
         printf("\tNo data partition found\n");
     }
-
+#if CONFIG_APP_ESP01_SUPPORT
+    printf("Get Stats Not Supported on ESP01\n");
+#else
     bool is_data = false;
     nvs_stats_t stats = {0};
     esp_err_t err;
@@ -99,7 +101,7 @@ static int get_info(int argc, char **argv)
     }
     else
         printf("Get stats Failed: %s (%0x)\n", esp_err_to_name(err), err);
-
+#endif
     return 0;
 }
 

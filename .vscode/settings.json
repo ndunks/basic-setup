@@ -2,6 +2,8 @@
     "files.associations": {
         "config.h": "c",
         "rom_functions.h": "c",
-        "nvs.h": "c"
+        "nvs.h": "c",
+        "commands.h": "c",
+        "uart.h": "c"
     }
 }
