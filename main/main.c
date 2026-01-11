@@ -41,6 +41,7 @@ void app_main()
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT();
 
     config_load();
+    actuator_setup(config.switch_values);
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     APP_STATE = xEventGroupCreate();
@@ -58,7 +59,6 @@ void app_main()
 
     ESP_ERROR_CHECK(esp_wifi_init(&init_config));
 
-    actuator_setup(config.switch_values);
 #if CONFIG_APP_WITH_SENSOR
     sensor_setup();
 #endif

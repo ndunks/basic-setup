@@ -87,14 +87,14 @@ PYTHON=python3 make menuconfig
 ### Actuators: Shift Register 74hc595
 
 **ESP01**
-- IO3 -> SHCP (Shift Register Clock Input)
 - IO2 -> DS   (Serial Data Input)
-- IO0 -> STCP (Storage Register Clock Input)
-
+- IO0 -> SHCP (Shift Register Clock Input)
+- IO3 -> STCP (Storage Register Clock Input)
+- IO3 (RXD) -> OE (Try to make it smooth)
 
 **NodeMCU**
-- GPIO12 -> SHCP (Shift Register Clock Input)
 - GPIO13 -> DS   (Serial Data Input)
+- GPIO12 -> SHCP (Shift Register Clock Input)
 - GPIO14 -> STCP (Storage Register Clock Input)
 - GPIO16 -> OE
 
