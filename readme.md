@@ -87,10 +87,16 @@ PYTHON=python3 make menuconfig
 ### Actuators: Shift Register 74hc595
 
 **ESP01**
-- IO2 -> DS   (Serial Data Input)
-- IO0 -> SHCP (Shift Register Clock Input)
-- IO3 -> STCP (Storage Register Clock Input)
-- IO3 (RXD) -> OE (Try to make it smooth)
+```
+IO2       -> DS   (Serial Data Input)
+IO0       -> SHCP (Shift Register Clock Input)
+IO3 (RXD) -> STCP (Storage Register Clock Input)
+```
+We can delay the shift-register output by using its OE pin. OE pin is active low, make it high at boot then pull-down after about ~1 sec.
+
+**Delay Shift Register**
+
+![alt](repo-assets/esp01-delay-shift-register-circuit.png)
 
 **NodeMCU**
 - GPIO13 -> DS   (Serial Data Input)
