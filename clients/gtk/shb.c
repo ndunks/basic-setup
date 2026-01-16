@@ -3,6 +3,7 @@
 struct app_config config;
 GtkWidget *window;
 GtkWidget *buttons[APP_SWITCH_COUNT];
+const char *g_server_ip = "192.168.100.2"; // Default IP address
 // CSS to define styles for classes
 const char *css_data =
     "button.active { background: rgb(76, 175, 80); color: white; }"
@@ -158,7 +159,7 @@ void on_app_activate(GApplication *app, gpointer user_data)
     // Set the message callback
     websocket_set_on_message(on_message);
     // Initialize the WebSocket client
-    websocket_client_init("192.168.100.2", "lws-minimal");
+    websocket_client_init(g_server_ip, "lws-minimal");
     // Start the WebSocket client in a separate thread
     websocket_client_start_threaded();
 }
@@ -166,6 +167,18 @@ void on_app_activate(GApplication *app, gpointer user_data)
 
 int main(int argc, char *argv[])
 {
+    // Parse command line arguments
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--ip") == 0 && i + 1 < argc) {
+            g_server_ip = argv[++i];
+        } else if (strcmp(argv[i], "--help") == 0) {
+            printf("Usage: %s [OPTIONS]\n", argv[0]);
+            printf("Options:\n");
+            printf("  --ip ADDRESS    Set server IP address (default: 192.168.100.2)\n");
+            printf("  --help          Show this help message\n");
+            return 0;
+        }
+    }
     
     gtk_init();
 
