@@ -4,6 +4,7 @@
         "rom_functions.h": "c",
         "nvs.h": "c",
         "commands.h": "c",
-        "uart.h": "c"
+        "uart.h": "c",
+        "websocket_client.h": "c"
     }
 }

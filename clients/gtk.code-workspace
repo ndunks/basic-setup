@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "gtk"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"gtk.h": "c",
+			"websocket_client.h": "c",
+			"libwebsockets.h": "c"
+		}
+	}
+}
