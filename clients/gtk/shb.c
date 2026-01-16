@@ -12,8 +12,7 @@ const char *css_data =
 
 void ws_send_toggle_button(int i){
     char msg[] = {WS_MSG_ID_ACTUATOR, 0};
-    int state = !((config.switch_values & (1 << i)) > 0);
-    msg[1] = i << 4 | state & 0b1111;
+    msg[1] = config.switch_values ^ (1 << i);
     websocket_send_binary(msg, 2);
 }
 
